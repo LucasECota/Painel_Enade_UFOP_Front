@@ -1,5 +1,6 @@
 import { Fragment, useState, useEffect } from "react";
 import { cursos as cursosAvaliaUfop } from "../data/avaliaufop";
+import { API_URL } from "../api";
 
 // true quando a tela é de celular (mesmo limite do CSS: 760px)
 function useEhCelular() {
@@ -24,7 +25,7 @@ function Edicoes() {
   const ehCelular = useEhCelular();
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/enade/cursos")
+    fetch(`${API_URL}/enade/cursos`)
       .then((response) => response.json())
       .then((dados) => setCursos(dados));
   }, []);
@@ -33,7 +34,7 @@ function Edicoes() {
   useEffect(() => {
     if (!cursoSelecionado || !anoSelecionado) return;
 
-    fetch(`http://localhost:3000/api/enade/${cursoSelecionado}?ano=${anoSelecionado}`)
+    fetch(`${API_URL}/enade/${cursoSelecionado}?ano=${anoSelecionado}`)
       .then((response) => response.json())
       .then((dados) => setDadosDoCurso(dados));
   }, [cursoSelecionado, anoSelecionado]);

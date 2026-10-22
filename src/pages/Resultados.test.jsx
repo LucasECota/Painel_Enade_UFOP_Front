@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { API_URL } from "../api";
 import { simularApi } from "../test/api";
 import Resultados from "./Resultados";
 
@@ -54,12 +55,24 @@ const resultados = {
 };
 
 const relatorios = [
-  { ano: 2023, titulo: "Enade 2023 — Relatório da IES", descricao: "UFOP, campus João Monlevade", tamanhoMb: 3.2, arquivo: "enade-2023.pdf" },
-  { ano: 2019, titulo: "Enade 2019 — Relatório da IES", descricao: "UFOP, campus João Monlevade", tamanhoMb: 0.5, arquivo: "enade-2019.pdf" },
+  {
+    ano: 2023,
+    titulo: "Enade 2023 — Relatório da IES",
+    descricao: "UFOP, campus João Monlevade",
+    tamanhoMb: 3.2,
+    arquivo: "enade-2023.pdf",
+  },
+  {
+    ano: 2019,
+    titulo: "Enade 2019 — Relatório da IES",
+    descricao: "UFOP, campus João Monlevade",
+    tamanhoMb: 0.5,
+    arquivo: "enade-2019.pdf",
+  },
 ];
 
 async function renderizar() {
-  simularApi({ "/api/resultados": resultados, "/api/relatorios": relatorios });
+  simularApi({ "/resultados": resultados, "/relatorios": relatorios });
   const resultado = render(<Resultados />);
   await screen.findByText("Conceito Enade em cada edição");
   return resultado;
@@ -114,7 +127,9 @@ describe("Resultados", () => {
     it("mostra os pesos (35/30/20/15) e eles somam 100%", async () => {
       await renderizar();
       const secao = topico("CPC em cada edição");
-      const pesos = [...secao.querySelectorAll(".kpi-valor")].map((e) => parseInt(e.textContent, 10));
+      const pesos = [...secao.querySelectorAll(".kpi-valor")].map((e) =>
+        parseInt(e.textContent, 10),
+      );
 
       expect(pesos).toEqual([35, 30, 20, 15]);
       expect(pesos.reduce((a, b) => a + b, 0)).toBe(100);
@@ -154,10 +169,22 @@ describe("Resultados", () => {
       const secao = within(topico("Perfil dos concluintes — Enade 2023"));
       const cartao = (titulo) => within(secao.getByText(titulo).closest(".card"));
 
-      expect(cartao("Renda familiar de até 3 salários mínimos").getByText("No Brasil: 27%")).toBeInTheDocument();
-      expect(secao.getByText("Renda familiar de até 3 salários mínimos").closest(".card").querySelector(".perfil-valor")).toHaveTextContent("37%");
+      expect(
+        cartao("Renda familiar de até 3 salários mínimos").getByText("No Brasil: 27%"),
+      ).toBeInTheDocument();
+      expect(
+        secao
+          .getByText("Renda familiar de até 3 salários mínimos")
+          .closest(".card")
+          .querySelector(".perfil-valor"),
+      ).toHaveTextContent("37%");
       // 60,5 arredonda para 61
-      expect(secao.getByText("Receberam bolsa acadêmica").closest(".card").querySelector(".perfil-valor")).toHaveTextContent("61%");
+      expect(
+        secao
+          .getByText("Receberam bolsa acadêmica")
+          .closest(".card")
+          .querySelector(".perfil-valor"),
+      ).toHaveTextContent("61%");
       expect(secao.getByText(/Entre os 45 concluintes/)).toBeInTheDocument();
     });
 
@@ -197,8 +224,8 @@ describe("Resultados", () => {
       const links = secao.getAllByRole("link", { name: "Baixar PDF" });
 
       expect(links.map((l) => l.getAttribute("href"))).toEqual([
-        "http://localhost:3000/api/relatorios/2023/download",
-        "http://localhost:3000/api/relatorios/2019/download",
+        `${API_URL}/relatorios/2023/download`,
+        `${API_URL}/relatorios/2019/download`,
       ]);
     });
 

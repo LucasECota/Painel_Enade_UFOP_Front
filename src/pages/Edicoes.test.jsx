@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { API_URL } from "../api";
 import { simularApi, simularTela } from "../test/api";
 import Edicoes from "./Edicoes";
 
@@ -27,7 +28,7 @@ const cardDoCurso = (nome) => screen.getByRole("button", { name: new RegExp(nome
 
 async function renderizar({ celular = false } = {}) {
   simularTela({ celular });
-  const fetchFalso = simularApi({ "/api/enade/cursos": cursos, "/api/enade/ec": dadosDoCurso });
+  const fetchFalso = simularApi({ "/enade/cursos": cursos, "/enade/ec": dadosDoCurso });
   render(<Edicoes />);
   await screen.findByRole("button", { name: /Engenharia de Computação/ });
   return fetchFalso;
@@ -45,7 +46,11 @@ describe("Edições", () => {
     await renderizar();
     const nomes = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
 
-    expect(nomes).toEqual(["Engenharia de Computação", "Engenharia de Produção", "Sistemas de Informação"]);
+    expect(nomes).toEqual([
+      "Engenharia de Computação",
+      "Engenharia de Produção",
+      "Sistemas de Informação",
+    ]);
     expect(screen.queryByText("Engenharia Elétrica")).not.toBeInTheDocument();
   });
 
@@ -68,7 +73,7 @@ describe("Edições", () => {
     await usuario.click(screen.getByRole("button", { name: "2023" }));
     await screen.findByText(/Total de questões: 40/);
 
-    expect(fetchFalso).toHaveBeenCalledWith("http://localhost:3000/api/enade/ec?ano=2023");
+    expect(fetchFalso).toHaveBeenCalledWith(`${API_URL}/enade/ec?ano=2023`);
   });
 
   it("ordena as disciplinas pela quantidade de questões e esconde as sem assunto", async () => {

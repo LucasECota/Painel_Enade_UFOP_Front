@@ -38,7 +38,9 @@ describe("AvaliaUFOP", () => {
 
   it("mostra os quatro módulos numerados com a quantidade de atividades", () => {
     renderizar();
-    const lista = screen.getByText("É assim que o curso está organizado dentro do Moodle:").parentElement.querySelector(".steps");
+    const lista = screen
+      .getByText("É assim que o curso está organizado dentro do Moodle:")
+      .parentElement.querySelector(".steps");
     const itens = within(lista).getAllByRole("listitem");
 
     expect(itens).toHaveLength(modulos.length);

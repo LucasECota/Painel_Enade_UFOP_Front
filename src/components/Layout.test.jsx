@@ -47,7 +47,10 @@ describe("Layout", () => {
   it("o título 'Painel Enade' do cabeçalho leva para a página inicial", () => {
     renderizar("/desempenho");
 
-    expect(screen.getByRole("link", { name: /ir para a página inicial/i })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: /ir para a página inicial/i })).toHaveAttribute(
+      "href",
+      "/",
+    );
   });
 
   it("o botão Menu abre e fecha a lista (celular) e fecha ao escolher uma página", async () => {

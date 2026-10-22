@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { API_URL } from "../api";
 
 function Desempenho() {
   const [cursos, setCursos] = useState([]);
@@ -7,7 +8,7 @@ function Desempenho() {
 
   useEffect(() => {
     function carregar() {
-      fetch("http://localhost:3000/api/desempenho", { cache: "no-store" })
+      fetch(`${API_URL}/desempenho`, { cache: "no-store" })
         .then((response) => response.json())
         .then((dados) => {
           setCursos(dados);

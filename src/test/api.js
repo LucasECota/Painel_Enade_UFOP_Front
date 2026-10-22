@@ -1,7 +1,8 @@
 import { vi } from "vitest";
 
 // Troca o fetch por uma versão falsa: cada rota da API responde com os dados do teste.
-// `rotas` é um objeto { "parte da URL": dados }. URL sem rota cadastrada vira erro.
+// `rotas` é um objeto { "parte do caminho da API": dados }, por exemplo "/desempenho".
+// URL sem rota cadastrada vira erro.
 export function simularApi(rotas) {
   const fetchFalso = vi.fn((url) => {
     const chave = Object.keys(rotas).find((k) => String(url).includes(k));

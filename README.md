@@ -13,6 +13,18 @@ e o desempenho dos alunos. Consome a API do `Painel_Enade_UFOP_Back`.
 | `npm run test:watch` | Roda os testes e repete a cada alteração |
 | `npm run lint` | Verifica o código com o Oxlint |
 
+## Configuração
+
+O endereço da API fica em um lugar só, `src/api.js`. Por padrão aponta para o backend local
+(`http://localhost:3000/api`). Para publicar, defina `VITE_API_URL` antes do build (veja o
+`.env.example`):
+
+```bash
+VITE_API_URL=https://api.exemplo.edu.br/api npm run build
+```
+
+No backend, lembre de liberar o endereço do site em `CORS_ORIGINS`.
+
 ## Testes
 
 Usam [Vitest](https://vitest.dev) + Testing Library, ao lado do código (`*.test.jsx`). A API é

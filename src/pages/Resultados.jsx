@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import BlocoCpc from "../components/BlocoCpc";
 import Topico from "../components/Topico";
-
-const API = "http://localhost:3000/api";
+import { API_URL } from "../api";
 
 const formatar = (n) =>
   n.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -51,8 +50,8 @@ function Resultados() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`${API}/resultados`).then((r) => r.json()),
-      fetch(`${API}/relatorios`).then((r) => r.json()),
+      fetch(`${API_URL}/resultados`).then((r) => r.json()),
+      fetch(`${API_URL}/relatorios`).then((r) => r.json()),
     ])
       .then(([resultados, lista]) => {
         setDados(resultados);
@@ -171,7 +170,7 @@ function Resultados() {
                       {r.descricao} · PDF, {formatar(r.tamanhoMb)} MB
                     </small>
                   </div>
-                  <a className="btn btn-link" href={`${API}/relatorios/${r.ano}/download`}>
+                  <a className="btn btn-link" href={`${API_URL}/relatorios/${r.ano}/download`}>
                     Baixar PDF
                   </a>
                 </li>
