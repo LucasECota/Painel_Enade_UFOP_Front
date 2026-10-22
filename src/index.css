@@ -402,25 +402,52 @@ tbody tr:nth-child(even) {
 @media (max-width: 760px) {
   .header-inner {
     flex-wrap: wrap;
-    gap: 16px;
+    justify-content: center;
+    gap: 12px 14px;
+    padding-top: 12px;
+    padding-bottom: 12px;
   }
 
+  /* logos lado a lado: o do ICEA ocupa o espaço que sobrar ao lado da UFOP */
   .logo-ufop {
-    height: 90px;
+    height: 76px;
+    flex: 0 0 auto;
   }
 
   .logo-icea {
-    height: 60px;
-    padding-left: 16px;
+    height: auto;
+    width: min(260px, calc(100% - 70px));
+    min-width: 0;
+    padding-left: 14px;
   }
 
   .header-title {
     width: 100%;
     margin-left: 0;
-    text-align: left;
+    text-align: center;
     border-right: none;
-    border-left: 4px solid var(--vinho);
-    padding: 0 0 0 12px;
+    border-top: 3px solid var(--vinho);
+    padding: 10px 0 0;
+  }
+
+  .header-title strong {
+    font-size: 1.7rem;
+  }
+
+  .header-title span {
+    font-size: 0.95rem;
+  }
+
+  .hero {
+    padding: 20px 18px;
+  }
+
+  .hero h1 {
+    font-size: 1.7rem;
+  }
+
+  .container {
+    padding: 24px 16px;
   }
 
   .nav-toggle {
@@ -488,27 +515,43 @@ tbody tr:nth-child(even) {
 
 .steps li {
   counter-increment: passo;
-  position: relative;
   background: var(--cinza-claro);
   border-radius: 4px;
-  padding: 16px 16px 16px 56px;
-  display: flex;
-  flex-direction: column;
+  padding: 16px;
+  /* número à esquerda, alinhado com a 1ª linha do título; tudo começa na mesma altura em todas as caixas */
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  align-content: start;
+  align-items: start;
+  column-gap: 14px;
 }
 
 .steps li::before {
   content: counter(passo);
-  position: absolute;
-  left: 14px;
-  top: 14px;
-  width: 30px;
-  height: 30px;
+  grid-row: 1 / span 2;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: var(--vinho);
   color: #fff;
   font-weight: 700;
+  line-height: 1;
   display: grid;
   place-items: center;
+}
+
+.steps li strong {
+  grid-column: 2;
+  align-self: start;
+  /* linha de 22px dentro de uma faixa de 34px (altura do número): a 1ª linha fica centralizada nele */
+  margin-top: 6px;
+  line-height: 22px;
+}
+
+.steps li span {
+  grid-column: 2;
+  align-self: start;
 }
 
 .steps span {
@@ -618,6 +661,12 @@ tbody tr:nth-child(even) {
 }
 
 .barras {
+  --col-nome: 260px;
+  --col-valor: 52px;
+  /* onde a área das barras começa e quanto mede (a linha dos 60% se baseia nisso) */
+  --barras-inicio: calc(var(--col-nome) + 12px);
+  --barras-largura: calc(100% - var(--col-nome) - var(--col-valor) - 24px);
+  position: relative;
   list-style: none;
   padding: 0;
   margin: 16px 0 0;
@@ -627,7 +676,7 @@ tbody tr:nth-child(even) {
 
 .barras li {
   display: grid;
-  grid-template-columns: 260px 1fr 52px;
+  grid-template-columns: var(--col-nome) 1fr var(--col-valor);
   align-items: center;
   gap: 12px;
 }
@@ -646,11 +695,11 @@ tbody tr:nth-child(even) {
 }
 
 .barra.ok {
-  background: var(--vinho);
+  background: #ab3a54;
 }
 
 .barra.baixo {
-  background: var(--cinza);
+  background: #85888d;
 }
 
 .barra-linha {
@@ -658,10 +707,16 @@ tbody tr:nth-child(even) {
   left: 60%;
   top: -3px;
   bottom: -3px;
-  border-left: 2px dashed var(--cinza-escuro);
+  transform: translateX(-50%);
+  border-left: 2px dashed #1b1c1e;
+}
+
+.barras li {
+  color: #5a5d62;
 }
 
 .barra-valor {
+  color: #4a4d52;
   font-weight: 700;
   text-align: right;
 }
@@ -672,12 +727,39 @@ tbody tr:nth-child(even) {
     gap: 0;
   }
 
+  /* gráfico no celular: largura máxima de 393px; nome em cima de cada barra, barras de
+     ponta a ponta até o valor, e a linha dos 60% passando por trás dos nomes */
+  .barras {
+    --col-valor: 44px;
+    --barras-inicio: 0px;
+    --barras-largura: calc(100% - var(--col-valor) - 12px);
+  }
+
   .barras li {
-    grid-template-columns: 1fr 48px;
+    grid-template-columns: 1fr var(--col-valor);
+    row-gap: 4px;
   }
 
   .barra-nome {
     grid-column: 1 / -1;
+    justify-self: start;
+    /* o texto quebra de linha antes de chegar na linha dos 60% */
+    max-width: calc(var(--barras-largura) * 0.6 - 10px);
+    position: relative;
+    z-index: 2;
+    background: #fff;
+    padding: 0 6px 0 0;
+    font-size: 0.9rem;
+    line-height: 1.3;
+  }
+
+  /* rótulo "60%": ocupa a coluna da barra (e não a do valor) */
+  .barras li.barra-legenda > span:not(.barra-trilho-legenda) {
+    display: none;
+  }
+
+  .barra-trilho-legenda {
+    grid-column: 1;
   }
 }
 
@@ -794,11 +876,6 @@ tbody tr:nth-child(even) {
   margin-top: 4px;
 }
 
-.disciplina summary:hover,
-.disciplina[open] summary {
-  background: var(--cinza-claro);
-}
-
 .disciplina-nome {
   flex: 1;
   font-weight: 600;
@@ -845,7 +922,7 @@ tbody tr:nth-child(even) {
 }
 
 .card-select.ativo {
-  background: var(--cinza-claro);
+  background: #fff;
   border-color: var(--vinho);
   box-shadow: 0 0 0 2px var(--vinho);
 }
@@ -887,4 +964,403 @@ tbody tr:nth-child(even) {
 
 .card-moodle:hover .card-cta {
   background: var(--cinza-claro);
+}
+
+/* Rótulo "60%" embaixo da linha de corte */
+.barras li.barra-legenda {
+  margin-top: -4px;
+}
+
+.barra-trilho-legenda {
+  position: relative;
+  height: 20px;
+}
+
+/* o "%" fica pendurado à direita, assim a linha cai no meio do "60" (entre o 6 e o 0) */
+.barra-60-pct {
+  position: absolute;
+  left: 100%;
+}
+
+.barra-60 {
+  position: absolute;
+  left: 60%;
+  top: 0;
+  transform: translateX(-50%);
+  line-height: 1;
+  font-weight: 500;
+  color: #5a5d62;
+}
+
+/* Linha tracejada contínua dos 60%: atravessa todas as barras de uma vez.
+   Colunas do gráfico: nome | barra | valor, com 12px entre elas (veja --col-nome/--col-valor). */
+.barras::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  bottom: 30px;
+  left: calc(var(--barras-inicio) + var(--barras-largura) * 0.6);
+  transform: translateX(-50%);
+  border-left: 2px dashed #1b1c1e;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.barra-linha {
+  display: none;
+}
+
+/* Detalhes do curso (Edições) abaixo do card, ocupando a largura toda */
+.detalhes-curso {
+  grid-column: 1 / -1;
+  /* sobe até encostar no card (anula o espaço de 16px da grade) e acompanha o contorno dele */
+  margin: -16px -2px 0;
+  padding: 8px 16px 20px;
+  border: 2px solid var(--vinho);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  background: var(--cinza-claro);
+}
+
+/* card aberto: base reta, para se emendar com o painel logo abaixo */
+.card-select.ativo:has(+ .detalhes-curso) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  box-shadow: 0 0 0 2px var(--vinho);
+}
+
+/* ===== Resultados do Enade ===== */
+:root {
+  --verde: #25663a;
+  --verde-claro: #e3f2e8;
+  --alerta: #8a2b2b;
+  --alerta-claro: #f8e5e5;
+}
+
+/* Conceito por edição: colunas de 1 a 5 */
+.conceitos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.conceito-col {
+  flex: 1 1 110px;
+  max-width: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 8px;
+  background: var(--cinza-claro);
+  border-radius: 4px;
+  text-align: center;
+}
+
+.conceito-valor {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--vinho);
+  line-height: 1.1;
+}
+
+.conceito-trilho {
+  width: 36px;
+  height: 100px;
+  margin: 6px 0;
+  background: #e4e5e7;
+  border-radius: 4px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.conceito-barra {
+  width: 100%;
+  background: #ab3a54;
+  border-radius: 4px 4px 0 0;
+}
+
+.conceito-col small {
+  color: var(--cinza);
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+/* Comparação com o Brasil */
+.comparacoes {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.comparacao {
+  border: 1px solid var(--borda);
+  border-radius: 4px;
+  padding: 14px 16px;
+}
+
+.comparacao-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.comparacao h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.selo {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 2px 12px;
+  border-radius: 999px;
+}
+
+.selo-acima {
+  background: var(--verde-claro);
+  color: var(--verde);
+}
+
+.selo-abaixo {
+  background: var(--alerta-claro);
+  color: var(--alerta);
+}
+
+.selo-igual {
+  background: var(--cinza-claro);
+  color: var(--cinza-escuro);
+}
+
+/* Par de barras ICEA x Brasil */
+.barras-duplas {
+  display: grid;
+  gap: 6px;
+}
+
+.barra-dupla {
+  display: grid;
+  grid-template-columns: 52px 1fr 48px;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: #5a5d62;
+}
+
+.barra-dupla-trilho {
+  height: 16px;
+  background: var(--cinza-claro);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.barra-icea,
+.barra-brasil {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+}
+
+.barra-icea {
+  background: #ab3a54;
+}
+
+.barra-brasil {
+  background: #9a9da2;
+}
+
+.barra-dupla-valor {
+  font-weight: 700;
+  text-align: right;
+  color: #4a4d52;
+}
+
+/* Perfil dos concluintes */
+.perfil-card h3 {
+  font-size: 0.95rem;
+  line-height: 1.3;
+  min-height: 2.6em;
+}
+
+.perfil-valor {
+  display: block;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--vinho);
+  line-height: 1.1;
+}
+
+.perfil-brasil {
+  display: block;
+  color: var(--cinza);
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+}
+
+/* Lista de relatórios para baixar */
+.relatorios {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0 0;
+  display: grid;
+  gap: 10px;
+}
+
+.relatorios li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--borda);
+  border-left: 4px solid var(--vinho);
+  border-radius: 4px;
+}
+
+.relatorios small {
+  display: block;
+  color: var(--cinza);
+}
+
+.relatorios .btn-link {
+  margin: 0;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  /* todas as edições na mesma linha, mesmo com 5 colunas */
+  .conceitos {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .conceito-col {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: none;
+    padding: 10px 4px;
+  }
+
+  .conceito-col small {
+    font-size: 0.72rem;
+  }
+
+  .conceito-valor {
+    font-size: 1.25rem;
+  }
+
+  .relatorios li {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Acesso rápido (início): 2 colunas, para 4 cartões ficarem em 2 + 2 */
+.card-grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (max-width: 760px) {
+  .card-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cpc-sub {
+  margin: 20px 0 0;
+  font-weight: 600;
+  color: var(--cinza-escuro);
+}
+
+/* ===== Tópicos expansíveis (página Resultados) ===== */
+.topico {
+  margin-top: 14px;
+  background: #fff;
+  border: 1px solid var(--borda);
+  border-left: 4px solid var(--vinho);
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+
+.topico:first-of-type {
+  margin-top: 24px;
+}
+
+.topico:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.topico > summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--cinza-escuro);
+  cursor: pointer;
+  list-style: none;
+}
+
+.topico > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* setinha dentro de um círculo */
+.topico > summary::after {
+  content: "";
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--cinza-claro);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23962038' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 16px;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.topico > summary:hover::after {
+  background-color: #e8e9eb;
+}
+
+.topico[open] > summary {
+  background: var(--cinza-claro);
+  border-bottom: 2px solid var(--vinho);
+}
+
+.topico[open] > summary::after {
+  background-color: #fff;
+  transform: rotate(180deg);
+}
+
+.topico-corpo {
+  padding: 4px 20px 22px;
+}
+
+.topico-corpo > p:first-child {
+  margin-top: 16px;
+}
+
+@media (max-width: 760px) {
+  .topico > summary {
+    padding: 14px 16px;
+    font-size: 1.05rem;
+  }
+
+  .topico-corpo {
+    padding: 4px 14px 18px;
+  }
 }

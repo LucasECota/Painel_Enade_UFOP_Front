@@ -9,14 +9,20 @@ const atalhos = [
       "Cursos de preparação para Eng. de Computação, Eng. de Produção e Sistemas de Informação.",
   },
   {
+    to: "/desempenho",
+    titulo: "Desempenho geral",
+    texto: "Acompanhe inscritos, concluintes e aproveitamento dos alunos em cada curso.",
+  },
+  {
     to: "/edicoes",
     titulo: "Edições do Enade",
     texto: "Consulte as disciplinas e assuntos cobrados em cada edição, por curso.",
   },
   {
-    to: "/desempenho",
-    titulo: "Desempenho geral",
-    texto: "Acompanhe inscritos, concluintes e aproveitamento dos alunos em cada curso.",
+    to: "/resultados",
+    titulo: "Resultados do Enade",
+    texto:
+      "Conceito dos cursos do ICEA em cada edição, comparação com o Brasil e relatórios do INEP.",
   },
 ];
 
@@ -36,7 +42,7 @@ function Home() {
       </section>
 
       <h2>Acesso rápido</h2>
-      <div className="card-grid">
+      <div className="card-grid card-grid-2">
         {atalhos.map((a) => (
           <Link key={a.to} to={a.to} className="card card-link">
             <h3>{a.titulo}</h3>

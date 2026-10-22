@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import Edicoes from "./pages/Edicoes";
 import AvaliaUfop from "./pages/AvaliaUfop";
 import Desempenho from "./pages/Desempenho";
+import Resultados from "./pages/Resultados";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/avaliaufop" element={<AvaliaUfop />} />
           <Route path="/desempenho" element={<Desempenho />} />
+          <Route path="/resultados" element={<Resultados />} />
           <Route path="/edicoes" element={<Edicoes />} />
         </Route>
       </Routes>

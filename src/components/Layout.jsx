@@ -7,8 +7,9 @@ import simboloIcea from "../assets/simbolo-icea.png";
 const links = [
   { to: "/", label: "Início" },
   { to: "/avaliaufop", label: "AvaliaUFOP" },
-  { to: "/edicoes", label: "Edições" },
   { to: "/desempenho", label: "Desempenho" },
+  { to: "/edicoes", label: "Edições" },
+  { to: "/resultados", label: "Resultados" },
 ];
 
 function Layout() {

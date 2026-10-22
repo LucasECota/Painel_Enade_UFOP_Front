@@ -1,11 +1,27 @@
-import { useState, useEffect } from "react";
+import { Fragment, useState, useEffect } from "react";
 import { cursos as cursosAvaliaUfop } from "../data/avaliaufop";
+
+// true quando a tela é de celular (mesmo limite do CSS: 760px)
+function useEhCelular() {
+  const consulta = "(max-width: 760px)";
+  const [ehCelular, setEhCelular] = useState(() => window.matchMedia(consulta).matches);
+
+  useEffect(() => {
+    const lista = window.matchMedia(consulta);
+    const atualizar = () => setEhCelular(lista.matches);
+    lista.addEventListener("change", atualizar);
+    return () => lista.removeEventListener("change", atualizar);
+  }, []);
+
+  return ehCelular;
+}
 
 function Edicoes() {
   const [cursos, setCursos] = useState([]);
   const [cursoSelecionado, setCursoSelecionado] = useState(null);
   const [anoSelecionado, setAnoSelecionado] = useState(null);
   const [dadosDoCurso, setDadosDoCurso] = useState(null);
+  const ehCelular = useEhCelular();
 
   useEffect(() => {
     fetch("http://localhost:3000/api/enade/cursos")
@@ -25,8 +41,9 @@ function Edicoes() {
   // Troca de curso: já limpa o ano e os dados antigos no mesmo clique,
   // em vez de esperar um efeito separado reagir depois (isso evita buscar
   // um ano que não existe para o novo curso).
+  // Clicar de novo no curso que já está aberto fecha as opções.
   function selecionarCurso(chave) {
-    setCursoSelecionado(chave);
+    setCursoSelecionado(chave === cursoSelecionado ? null : chave);
     setAnoSelecionado(null);
     setDadosDoCurso(null);
   }
@@ -43,31 +60,10 @@ function Edicoes() {
   // "anos" já vem ordenado do mais recente pro mais antigo.
   const duasEdicoesMaisRecentes = curso ? curso.anos.slice(0, 2) : [];
 
-  return (
-    <div>
-      <h1>Edições do Enade</h1>
-      <p>
-        Escolha um curso e uma edição para ver quantas questões o Enade cobrou em cada disciplina e
-        quais assuntos apareceram, ajudando a direcionar os estudos.
-      </p>
-
-      <div className="card-grid">
-        {cursosOrdenados.map((c) => (
-          <button
-            key={c.chave}
-            className={
-              c.chave === cursoSelecionado
-                ? "card card-link card-select ativo"
-                : "card card-link card-select"
-            }
-            onClick={() => selecionarCurso(c.chave)}
-          >
-            <h3>{c.nome}</h3>
-            <span className="card-more">Ver edições ↓</span>
-          </button>
-        ))}
-      </div>
-
+  // Anos disponíveis + disciplinas do curso escolhido.
+  // No desktop fica abaixo de todos os cards; no celular, logo abaixo do card do curso.
+  const detalhes = (
+    <>
       {curso && (
         <div>
           <p>Edições com assuntos disponíveis:</p>
@@ -115,6 +111,41 @@ function Edicoes() {
           </div>
         </div>
       )}
+    </>
+  );
+
+  return (
+    <div>
+      <h1>Edições do Enade</h1>
+      <p>
+        Escolha um curso e uma edição para ver quantas questões o Enade cobrou em cada disciplina e
+        quais assuntos apareceram, ajudando a direcionar os estudos.
+      </p>
+
+      <div className="card-grid">
+        {cursosOrdenados.map((c) => (
+          <Fragment key={c.chave}>
+            <button
+              className={
+                c.chave === cursoSelecionado
+                  ? "card card-link card-select ativo"
+                  : "card card-link card-select"
+              }
+              onClick={() => selecionarCurso(c.chave)}
+            >
+              <h3>{c.nome}</h3>
+              <span className="card-more">
+                {c.chave === cursoSelecionado ? "Fechar ↑" : "Ver edições ↓"}
+              </span>
+            </button>
+            {ehCelular && c.chave === cursoSelecionado && (
+              <div className="detalhes-curso">{detalhes}</div>
+            )}
+          </Fragment>
+        ))}
+      </div>
+
+      {!ehCelular && detalhes}
     </div>
   );
 }

@@ -1,92 +1,97 @@
-import { useState } from "react";
-import { cursos } from "../data/avaliaufop";
-
-// DADOS DE EXEMPLO — substituir por dados reais (export de notas do Moodle / API) depois.
-const exemplo = {
-  ec: {
-    inscritos: 48,
-    concluintes: 21,
-    media: 68,
-    aprovados: 17,
-    atividades: [82, 71, 64, 59, 66],
-  },
-  ep: {
-    inscritos: 36,
-    concluintes: 15,
-    media: 64,
-    aprovados: 11,
-    atividades: [79, 68, 61, 55, 63],
-  },
-  si: {
-    inscritos: 52,
-    concluintes: 24,
-    media: 71,
-    aprovados: 20,
-    atividades: [85, 74, 69, 62, 70],
-  },
-};
-
-const nomesAtividades = [
-  "Teste o seu conhecimento",
-  "Formação Geral (objetivas)",
-  "Componente Específico (discursivas)",
-  "Componente Específico (objetivas)",
-  "Média geral",
-];
+import { useState, useEffect } from "react";
 
 function Desempenho() {
+  const [cursos, setCursos] = useState([]);
   const [sigla, setSigla] = useState("ec");
-  const d = exemplo[sigla];
+  const [erro, setErro] = useState(false);
 
-  const kpis = [
-    { rotulo: "Inscritos", valor: d.inscritos },
-    { rotulo: "Concluíram", valor: d.concluintes },
-    { rotulo: "Aprovados (≥ 60%)", valor: d.aprovados },
-    { rotulo: "Média geral", valor: `${d.media}%` },
-  ];
+  useEffect(() => {
+    function carregar() {
+      fetch("http://localhost:3000/api/desempenho", { cache: "no-store" })
+        .then((response) => response.json())
+        .then((dados) => {
+          setCursos(dados);
+          setErro(false);
+        })
+        .catch(() => setErro(true));
+    }
+
+    carregar();
+    // Busca de novo quando a aba volta a ficar visível, pra pegar dados atualizados
+    window.addEventListener("focus", carregar);
+    return () => window.removeEventListener("focus", carregar);
+  }, []);
+
+  const d = cursos.find((c) => c.chave === sigla);
+
+  const kpis = d
+    ? [
+        { rotulo: "Inscritos", valor: d.inscritos },
+        { rotulo: "Concluíram", valor: d.concluintes },
+        { rotulo: "Média geral", valor: `${d.media}%` },
+      ]
+    : [];
 
   return (
     <div>
       <h1>Desempenho geral dos alunos</h1>
-      <p className="aviso">
-        Dados de exemplo — a integração com as notas reais do AvaliaUFOP será feita depois.
+      <p>
+        Acompanhe o desempenho dos alunos no AvaliaUFOP, com o número de inscritos e concluintes e o
+        aproveitamento médio em cada atividade.
       </p>
 
       <div>
         {cursos.map((c) => (
           <button
-            key={c.sigla}
-            className={c.sigla === sigla ? "btn btn-selecionado" : "btn"}
-            onClick={() => setSigla(c.sigla)}
+            key={c.chave}
+            className={c.chave === sigla ? "btn btn-selecionado" : "btn"}
+            onClick={() => setSigla(c.chave)}
           >
             {c.nome}
           </button>
         ))}
       </div>
 
-      <div className="card-grid kpis">
-        {kpis.map((k) => (
-          <div key={k.rotulo} className="card kpi">
-            <span className="kpi-valor">{k.valor}</span>
-            <span className="kpi-rotulo">{k.rotulo}</span>
-          </div>
-        ))}
-      </div>
+      {erro && <p className="aviso">Não foi possível carregar os dados de desempenho.</p>}
 
-      <h2>Aproveitamento médio por atividade</h2>
-      <ul className="barras">
-        {d.atividades.map((v, i) => (
-          <li key={nomesAtividades[i]}>
-            <span className="barra-nome">{nomesAtividades[i]}</span>
-            <span className="barra-trilho">
-              <span className={v >= 60 ? "barra ok" : "barra baixo"} style={{ width: `${v}%` }} />
-              <span className="barra-linha" />
-            </span>
-            <span className="barra-valor">{v}%</span>
-          </li>
-        ))}
-      </ul>
-      <p className="nota">A linha vertical marca os 60% exigidos para a certificação.</p>
+      {d && (
+        <>
+          <div className="card-grid kpis">
+            {kpis.map((k) => (
+              <div key={k.rotulo} className="card kpi">
+                <span className="kpi-valor">{k.valor}</span>
+                <span className="kpi-rotulo">{k.rotulo}</span>
+              </div>
+            ))}
+          </div>
+
+          <h2>Aproveitamento médio por atividade</h2>
+          <ul className="barras">
+            {d.atividades.map((a) => (
+              <li key={a.nome}>
+                <span className="barra-nome">{a.nome}</span>
+                <span className="barra-trilho">
+                  <span
+                    className={a.aproveitamento >= 60 ? "barra ok" : "barra baixo"}
+                    style={{ width: `${a.aproveitamento}%` }}
+                  />
+                  <span className="barra-linha" />
+                </span>
+                <span className="barra-valor">{a.aproveitamento}%</span>
+              </li>
+            ))}
+            <li className="barra-legenda" aria-hidden="true">
+              <span />
+              <span className="barra-trilho-legenda">
+                <span className="barra-60">
+                  60<span className="barra-60-pct">%</span>
+                </span>
+              </span>
+              <span />
+            </li>
+          </ul>
+        </>
+      )}
     </div>
   );
 }
