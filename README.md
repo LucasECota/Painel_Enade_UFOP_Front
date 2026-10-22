@@ -1,16 +1,25 @@
-# React + Vite
+# Painel Enade — ICEA/UFOP (front-end)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Site em React + Vite com os cursos de preparação do AvaliaUFOP, as edições e os resultados do Enade
+e o desempenho dos alunos. Consome a API do `Painel_Enade_UFOP_Back`.
 
-Currently, two official plugins are available:
+## Comandos
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Comando | O que faz |
+| --- | --- |
+| `npm run dev` | Sobe o site em modo de desenvolvimento |
+| `npm run build` | Gera a versão de produção |
+| `npm test` | Roda os testes automatizados uma vez |
+| `npm run test:watch` | Roda os testes e repete a cada alteração |
+| `npm run lint` | Verifica o código com o Oxlint |
 
-## React Compiler
+## Testes
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Usam [Vitest](https://vitest.dev) + Testing Library, ao lado do código (`*.test.jsx`). A API é
+simulada em `src/test/api.js`, então os testes não precisam do backend no ar.
 
-## Expanding the Oxlint configuration
+Cobrem o menu, os tópicos expansíveis e as páginas Início, AvaliaUFOP, Edições, Desempenho e
+Resultados (dados exibidos, troca de curso, filtros, links e erros da API).
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+O que os testes **não** cobrem é o visual (posição da linha dos 60%, cores, espaçamentos): jsdom não
+calcula layout. Isso continua sendo conferido abrindo a página no navegador.
