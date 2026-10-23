@@ -6,6 +6,13 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    groups:
+      # react e react-dom precisam ter sempre a MESMA versão: sobem juntos, num PR só
+      react:
+        patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
+      # ferramentas de desenvolvimento (vite, vitest, oxlint, oxfmt...) num PR só
+      ferramentas-de-desenvolvimento:
+        dependency-type: development
 
   # mantém as ações do GitHub usadas no CI atualizadas
   - package-ecosystem: github-actions
