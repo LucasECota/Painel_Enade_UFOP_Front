@@ -14,10 +14,6 @@ média do Brasil e relatórios para baixar.
 Projeto desenvolvido no âmbito do programa **Pró-Ativa (UFOP)**, por **Lucas Emanuel Cota Carneiro**,
 com orientação do prof. **Josemar Alves Caetano**.
 
-<p align="center">
-  <img src="docs/screenshots/05-resultados-conceito-cpc.png" alt="Página Resultados do Enade, com o conceito e o CPC dos cursos do ICEA" width="860">
-</p>
-
 > **Repositório da API:** [Painel_Enade_UFOP_Back](https://github.com/LucasECota/Painel_Enade_UFOP_Back)
 > (Node.js + Express). O guia para publicar os dois em um servidor está em
 > [DEPLOY.md](https://github.com/LucasECota/Painel_Enade_UFOP_Back/blob/main/DEPLOY.md).
@@ -59,6 +55,8 @@ direcionar os estudos. Cada disciplina abre e fecha para não sobrecarregar a le
 Conceito Enade e CPC de cada edição, comparação das médias do ICEA com as do Brasil (Formação Geral
 e Componente Específico), perfil socioeconômico dos concluintes e os **relatórios oficiais do INEP
 para baixar**. Os blocos são expansíveis.
+
+<img src="docs/screenshots/05-resultados-conceito-cpc.png" alt="Conceito Enade e CPC dos cursos do ICEA" width="860">
 
 <img src="docs/screenshots/06-resultados-comparacao-perfil.png" alt="Comparação com a média do Brasil e perfil dos concluintes" width="860">
 
