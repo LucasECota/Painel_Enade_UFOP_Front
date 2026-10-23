@@ -32,16 +32,19 @@ function BlocoCpc({ cpc, fonte }) {
         ))}
       </div>
       <p className="cpc-saiba-mais">
-        Quer entender melhor como o CPC é calculado? Veja{" "}
-        <a href={LINK_CAVIN} target="_blank" rel="noopener noreferrer">
-          como ele é composto e interpretado
+        Como o CPC é calculado:{" "}
+        <a
+          href={LINK_CAVIN}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="No painel: aba “CPC Detalhado”, botão “Como interpretar o CPC e suas Dimensões”"
+        >
+          painel da CAVIN/UFOP
         </a>{" "}
-        no painel da CAVIN/UFOP (aba “CPC Detalhado”, botão “Como interpretar o CPC e suas
-        Dimensões”) e os{" "}
+        ·{" "}
         <a href={LINK_INEP} target="_blank" rel="noopener noreferrer">
-          documentos oficiais do INEP
+          documentos do INEP
         </a>
-        .
       </p>
 
       <p className="cpc-sub">Nota do curso em cada edição:</p>
