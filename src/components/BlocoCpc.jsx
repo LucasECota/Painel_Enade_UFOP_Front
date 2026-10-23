@@ -1,8 +1,13 @@
 // Bloco do CPC (Conceito Preliminar de Curso) na página Resultados.
 // Para remover o CPC do site: apague este arquivo, a linha <BlocoCpc /> em
-// src/pages/Resultados.jsx, a regra .cpc-sub no fim de src/index.css e o campo "cpc" (e "fonteCpc") em
+// src/pages/Resultados.jsx, as regras .cpc-sub e .cpc-saiba-mais no fim de src/index.css e o campo "cpc" (e "fonteCpc") em
 // Painel_Enade_UFOP_Back/data/resultados-enade.json.
 import Topico from "./Topico";
+
+// onde o leitor entende como o CPC é composto e calculado
+const LINK_CAVIN = "https://cavinufop.shinyapps.io/Indicadores_UFOP/";
+const LINK_INEP =
+  "https://www.gov.br/inep/pt-br/areas-de-atuacao/pesquisas-estatisticas-e-indicadores/indicadores-de-qualidade-da-educacao-superior/outros-documentos";
 
 const pesos = [
   { valor: "35%", rotulo: "Valor agregado (IDD)" },
@@ -26,6 +31,19 @@ function BlocoCpc({ cpc, fonte }) {
           </div>
         ))}
       </div>
+      <p className="cpc-saiba-mais">
+        Quer entender melhor como o CPC é calculado? Veja{" "}
+        <a href={LINK_CAVIN} target="_blank" rel="noopener noreferrer">
+          como ele é composto e interpretado
+        </a>{" "}
+        no painel da CAVIN/UFOP (aba “CPC Detalhado”, botão “Como interpretar o CPC e suas
+        Dimensões”) e os{" "}
+        <a href={LINK_INEP} target="_blank" rel="noopener noreferrer">
+          documentos oficiais do INEP
+        </a>
+        .
+      </p>
+
       <p className="cpc-sub">Nota do curso em cada edição:</p>
       <div className="conceitos">
         {cpc.map((e) => (

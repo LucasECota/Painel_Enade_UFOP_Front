@@ -135,6 +135,23 @@ describe("Resultados", () => {
       expect(pesos.reduce((a, b) => a + b, 0)).toBe(100);
     });
 
+    it("tem links para entender o cálculo: painel da CAVIN e documentos do INEP, em nova aba", async () => {
+      await renderizar();
+      const secao = within(topico("CPC em cada edição"));
+      const cavin = secao.getByRole("link", { name: /como ele é composto e interpretado/ });
+      const inep = secao.getByRole("link", { name: /documentos oficiais do INEP/ });
+
+      expect(cavin).toHaveAttribute("href", "https://cavinufop.shinyapps.io/Indicadores_UFOP/");
+      expect(inep).toHaveAttribute("href", expect.stringContaining("gov.br/inep"));
+      for (const link of [cavin, inep]) {
+        expect(link).toHaveAttribute("target", "_blank");
+        expect(link).toHaveAttribute("rel", expect.stringContaining("noopener"));
+      }
+      expect(
+        secao.getByText(/botão “Como interpretar o CPC e suas Dimensões”/),
+      ).toBeInTheDocument();
+    });
+
     it("explica a sigla e cita a fonte", async () => {
       await renderizar();
       const secao = within(topico("CPC em cada edição"));

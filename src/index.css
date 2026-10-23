@@ -1364,3 +1364,9 @@ tbody tr:nth-child(even) {
     padding: 4px 14px 18px;
   }
 }
+
+.cpc-saiba-mais {
+  margin: 16px 0 0;
+  font-size: 0.95rem;
+  color: var(--cinza-escuro);
+}
