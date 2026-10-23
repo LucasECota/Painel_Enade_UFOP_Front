@@ -30,7 +30,7 @@ No backend, lembre de liberar o endereço do site em `CORS_ORIGINS`.
 O arquivo `.github/workflows/ci.yml` faz o GitHub rodar, a cada push na `master` e em todo pull request:
 
 1. **Lint, testes e build:** `npm ci`, `npm run lint`, `npm test` e `npm run build`;
-2. **Auditoria:** `npm audit --omit=dev --audit-level=high` (falha se houver vulnerabilidade alta ou crítica).
+2. **Auditoria:** `npm audit --audit-level=high` (falha se houver vulnerabilidade alta ou crítica, inclusive nas ferramentas de desenvolvimento).
 
 O `.github/dependabot.yml` abre pull requests semanais quando uma dependência tem versão nova.
 O CI só passa a rodar depois que o projeto for enviado a um repositório no GitHub.
