@@ -3,6 +3,13 @@
 Site em React + Vite com os cursos de preparação do AvaliaUFOP, as edições e os resultados do Enade
 e o desempenho dos alunos. Consome a API do `Painel_Enade_UFOP_Back`.
 
+## Publicação
+
+O guia de publicação (site e API juntos, em um servidor Linux) está no repositório da API:
+[DEPLOY.md](https://github.com/LucasECota/Painel_Enade_UFOP_Back/blob/main/DEPLOY.md).
+O redirecionamento das rotas já está em `public/_redirects` (hospedagens estáticas); com Nginx,
+use o `try_files` do exemplo do guia.
+
 ## Comandos
 
 | Comando | O que faz |
