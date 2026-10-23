@@ -12,6 +12,9 @@ const links = [
   { to: "/resultados", label: "Resultados" },
 ];
 
+// calculado uma vez, fora do componente (chamar Date durante a renderização não é recomendado)
+const anoAtual = new Date().getFullYear();
+
 function Layout() {
   const [menuAberto, setMenuAberto] = useState(false);
 
@@ -108,9 +111,7 @@ function Layout() {
             </ul>
           </div>
         </div>
-        <div className="footer-copy">
-          © {new Date().getFullYear()} Universidade Federal de Ouro Preto — ICEA
-        </div>
+        <div className="footer-copy">© {anoAtual} Universidade Federal de Ouro Preto — ICEA</div>
       </footer>
     </>
   );
