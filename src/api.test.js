@@ -18,6 +18,11 @@ describe("API_URL", () => {
     expect(await carregar("https://api.exemplo.edu.br/api")).toBe("https://api.exemplo.edu.br/api");
   });
 
+  it("aceita um endereço relativo (site e API no mesmo domínio, atrás de um proxy)", async () => {
+    expect(await carregar("/api")).toBe("/api");
+    expect(await carregar("/api/")).toBe("/api");
+  });
+
   it("tira a barra do final, para não gerar endereços com //", async () => {
     expect(await carregar("https://api.exemplo.edu.br/api/")).toBe(
       "https://api.exemplo.edu.br/api",
