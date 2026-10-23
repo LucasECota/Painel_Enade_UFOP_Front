@@ -106,12 +106,12 @@ Todas as telas foram pensadas para telas pequenas, com menu recolhido e gráfico
 
 ## Como funciona
 
-```mermaid
-flowchart LR
-    U[Navegador] -->|HTTPS| N[Nginx]
-    N -->|arquivos| F[Site React<br/>este repositório]
-    N -->|/api| A[API Express<br/>Painel_Enade_UFOP_Back]
-    A --> D[(Arquivos de dados<br/>Moodle anonimizado,<br/>Enade e PDFs do INEP)]
+```
+Navegador ──HTTPS──▶ Nginx
+                      ├─ arquivos ──▶ Site React     (este repositório)
+                      └─ /api ──────▶ API Express    (Painel_Enade_UFOP_Back)
+                                       └─▶ Arquivos de dados: notas do Moodle
+                                           (anonimizadas), Enade e PDFs do INEP
 ```
 
 ## Como rodar
