@@ -5,7 +5,6 @@ import { simularApi } from "../test/api";
 import Resultados from "./Resultados";
 
 const resultados = {
-  fonteCpc: "Fonte de teste do CPC",
   cursos: [
     {
       chave: "ec",
@@ -13,10 +12,6 @@ const resultados = {
       edicoes: [
         { ano: 2019, conceito: 3, presentes: 51, populacao: 53 },
         { ano: 2023, conceito: 3, presentes: 45, populacao: 51 },
-      ],
-      cpc: [
-        { ano: 2019, valor: 2.98 },
-        { ano: 2023, valor: 2.71 },
       ],
       comparacao: {
         ano: 2023,
@@ -36,7 +31,6 @@ const resultados = {
       chave: "si",
       nome: "Sistemas de Informação",
       edicoes: [{ ano: 2021, conceito: 4, presentes: 45, populacao: 51 }],
-      cpc: [{ ano: 2021, valor: 3.42 }],
       comparacao: {
         ano: 2021,
         geral: { curso: 44.9, brasil: 38.3 },
@@ -88,11 +82,10 @@ describe("Resultados", () => {
     expect(screen.getByRole("button", { name: "Sistemas de Informação" })).toBeInTheDocument();
   });
 
-  it("mostra os cinco tópicos; só os Relatórios começam fechados", async () => {
+  it("mostra os quatro tópicos; só os Relatórios começam fechados", async () => {
     await renderizar();
 
     expect(topico("Conceito Enade em cada edição")).toHaveAttribute("open");
-    expect(topico("CPC em cada edição")).toHaveAttribute("open");
     expect(topico("Comparação com o Brasil — Enade 2023")).toHaveAttribute("open");
     expect(topico("Perfil dos concluintes — Enade 2023")).toHaveAttribute("open");
     expect(topico("Relatórios do INEP para baixar")).not.toHaveAttribute("open");
@@ -112,51 +105,6 @@ describe("Resultados", () => {
       const { container } = await renderizar();
 
       expect(container).not.toHaveTextContent(/O conceito vai de 1 a 5/);
-    });
-  });
-
-  describe("CPC", () => {
-    it("mostra o CPC de cada edição com duas casas e vírgula", async () => {
-      await renderizar();
-      const secao = within(topico("CPC em cada edição"));
-
-      expect(secao.getByText("2,98")).toBeInTheDocument();
-      expect(secao.getByText("2,71")).toBeInTheDocument();
-    });
-
-    it("mostra os pesos (35/30/20/15) e eles somam 100%", async () => {
-      await renderizar();
-      const secao = topico("CPC em cada edição");
-      const pesos = [...secao.querySelectorAll(".kpi-valor")].map((e) =>
-        parseInt(e.textContent, 10),
-      );
-
-      expect(pesos).toEqual([35, 30, 20, 15]);
-      expect(pesos.reduce((a, b) => a + b, 0)).toBe(100);
-    });
-
-    it("tem links para entender o cálculo: painel da CAVIN e documentos do INEP, em nova aba", async () => {
-      await renderizar();
-      const secao = within(topico("CPC em cada edição"));
-      const cavin = secao.getByRole("link", { name: "painel da CAVIN/UFOP" });
-      const inep = secao.getByRole("link", { name: "documentos do INEP" });
-
-      expect(cavin).toHaveAttribute("href", "https://cavinufop.shinyapps.io/Indicadores_UFOP/");
-      expect(inep).toHaveAttribute("href", expect.stringContaining("gov.br/inep"));
-      for (const link of [cavin, inep]) {
-        expect(link).toHaveAttribute("target", "_blank");
-        expect(link).toHaveAttribute("rel", expect.stringContaining("noopener"));
-      }
-      // a indicação de onde clicar no painel fica na dica do link
-      expect(cavin).toHaveAttribute("title", expect.stringContaining("Como interpretar o CPC"));
-    });
-
-    it("explica a sigla e cita a fonte", async () => {
-      await renderizar();
-      const secao = within(topico("CPC em cada edição"));
-
-      expect(secao.getByText(/Conceito Preliminar de Curso/)).toBeInTheDocument();
-      expect(secao.getByText(/Fonte de teste do CPC/)).toBeInTheDocument();
     });
   });
 
@@ -215,15 +163,15 @@ describe("Resultados", () => {
     const usuario = userEvent.setup();
     await renderizar();
 
-    await usuario.click(screen.getByText("CPC em cada edição")); // fecha o CPC
+    await usuario.click(screen.getByText("Conceito Enade em cada edição")); // fecha o tópico
     await usuario.click(screen.getByRole("button", { name: "Sistemas de Informação" }));
 
     // títulos acompanham o ano dos dados do curso novo (2021 para Sistemas)
     expect(screen.getByText("Comparação com o Brasil — Enade 2021")).toBeInTheDocument();
     expect(screen.getByText("Perfil dos concluintes — Enade 2021")).toBeInTheDocument();
     expect(within(topico("Conceito Enade em cada edição")).getByText("2021")).toBeInTheDocument();
-    // o CPC continua fechado, como o usuário deixou
-    expect(topico("CPC em cada edição")).not.toHaveAttribute("open");
+    // o tópico continua fechado, como o usuário deixou
+    expect(topico("Conceito Enade em cada edição")).not.toHaveAttribute("open");
   });
 
   describe("relatórios do INEP", () => {

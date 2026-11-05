@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import BlocoCpc from "../components/BlocoCpc";
 import Topico from "../components/Topico";
 import { API_URL } from "../api";
 
@@ -119,8 +118,6 @@ function Resultados() {
               ))}
             </div>
           </Topico>
-
-          <BlocoCpc cpc={curso.cpc} fonte={dados.fonteCpc} />
 
           <Topico titulo={`Comparação com o Brasil — Enade ${curso.comparacao.ano}`}>
             <p>Média dos concluintes na prova, em uma escala de 0 a 100.</p>

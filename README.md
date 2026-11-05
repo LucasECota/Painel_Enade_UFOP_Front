@@ -52,11 +52,11 @@ direcionar os estudos. Cada disciplina abre e fecha para não sobrecarregar a le
 <img src="docs/screenshots/04-edicoes.png" alt="Disciplinas e assuntos do Enade 2023 de Engenharia de Computação" width="860">
 
 ### Resultados
-Conceito Enade e CPC de cada edição, comparação das médias do ICEA com as do Brasil (Formação Geral
+Conceito Enade de cada edição, comparação das médias do ICEA com as do Brasil (Formação Geral
 e Componente Específico), perfil socioeconômico dos concluintes e os **relatórios oficiais do INEP
 para baixar**. Os blocos são expansíveis.
 
-<img src="docs/screenshots/05-resultados-conceito-cpc.png" alt="Conceito Enade e CPC dos cursos do ICEA" width="860">
+<img src="docs/screenshots/05-resultados-conceito.png" alt="Conceito Enade dos cursos do ICEA e comparação com o Brasil" width="860">
 
 <img src="docs/screenshots/06-resultados-comparacao-perfil.png" alt="Comparação com a média do Brasil e perfil dos concluintes" width="860">
 
@@ -90,7 +90,7 @@ Todas as telas foram pensadas para telas pequenas, com menu recolhido e gráfico
 - **Usabilidade:** link "pular para o conteúdo", seções expansíveis nativas (`<details>`, que
   funcionam pelo teclado) e botões com rótulos claros.
 - **Informação sem exagero:** cada tela mostra poucos dados importantes, com explicações curtas das
-  siglas (CPC, IES) para quem não conhece o vocabulário do Enade.
+  sigla (IES) para quem não conhece o vocabulário do Enade.
 
 ## Tecnologias
 
@@ -182,8 +182,7 @@ src/
 ├── App.jsx                rotas
 ├── components/
 │   ├── Layout.jsx         cabeçalho, menu e rodapé
-│   ├── Topico.jsx         seção que abre e fecha
-│   └── BlocoCpc.jsx       bloco do CPC (fácil de remover)
+│   └── Topico.jsx         seção que abre e fecha
 ├── data/avaliaufop.js     cursos, módulos e links do Moodle
 ├── pages/                 Início, AvaliaUFOP, Desempenho, Edições e Resultados
 ├── test/                  utilitários dos testes (API simulada)
@@ -194,11 +193,11 @@ docs/screenshots/          imagens deste README
 ## Fontes dos dados
 
 - Relatórios de IES do Enade — **INEP** (UFOP, campus João Monlevade).
-- Indicadores de qualidade (CPC) — painel da **CAVIN/UFOP**, com dados do INEP.
 - Notas dos simulados — exports do Moodle da **UFOP Aberta**, anonimizados.
 
 O INEP informa que as notas do Enade só são comparáveis dentro da mesma área e do mesmo ano, e não
-entre edições. O painel respeita essa regra na forma como apresenta os números.
+entre edições. Por isso o painel mostra o resultado de cada edição separadamente e só compara o ICEA
+com a média do Brasil no mesmo ano, sem calcular variações entre anos.
 
 ## Autoria
 
