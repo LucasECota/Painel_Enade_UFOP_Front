@@ -25,6 +25,12 @@ const dadosDoCurso = {
     disciplinas: [
       { nome: "Compiladores I", qtd: 1, assuntos: ["Análise léxica"] },
       { nome: "Redes de Computadores I", qtd: 3, assuntos: ["OSPF", "TCP e UDP"] },
+      {
+        nome: "Algoritmos e Estruturas de Dados I",
+        qtd: 2,
+        discursivas: 1,
+        assuntos: ["Busca binária", "Pilhas e filas"],
+      },
       { nome: "Sem assuntos cadastrados", qtd: 5, assuntos: [] },
     ],
   },
@@ -134,7 +140,28 @@ describe("Edições", () => {
     await screen.findByText("Redes de Computadores I");
 
     const nomes = [...document.querySelectorAll(".disciplina-nome")].map((e) => e.textContent);
-    expect(nomes).toEqual(["Redes de Computadores I", "Compiladores I"]); // 3 questões antes de 1; sem assuntos fora
+    // 3 questões, depois 2, depois 1; a disciplina sem assuntos fica de fora
+    expect(nomes).toEqual([
+      "Redes de Computadores I",
+      "Algoritmos e Estruturas de Dados I",
+      "Compiladores I",
+    ]);
+  });
+
+  it("separa os assuntos das questões discursivas e das objetivas", async () => {
+    const usuario = userEvent.setup();
+    await renderizar();
+    await usuario.click(cardDoCurso("Computação"));
+    await usuario.click(screen.getByRole("button", { name: "2023" }));
+    await screen.findByText("Redes de Computadores I");
+
+    const aed = screen.getByText("Algoritmos e Estruturas de Dados I").closest("details");
+    const grupos = [...aed.querySelectorAll(".grupo-questoes, li")].map((e) => e.textContent);
+    expect(grupos).toEqual(["Discursiva", "Busca binária", "Objetiva", "Pilhas e filas"]);
+
+    // sem discursiva, a lista continua sem títulos
+    const redes = screen.getByText("Redes de Computadores I").closest("details");
+    expect(redes.querySelector(".grupo-questoes")).toBeNull();
   });
 
   it("usa 'questão' no singular e 'questões' no plural, sem mostrar a contagem de assuntos", async () => {

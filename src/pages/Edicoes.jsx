@@ -23,6 +23,37 @@ const SUBTOPICOS = [
   { chave: "questoes", titulo: "Acertos por questão" },
 ];
 
+// Lista os assuntos de uma disciplina. Quando ela tem questão discursiva, separa as discursivas
+// das objetivas (a API manda as discursivas primeiro na lista).
+function AssuntosDaDisciplina({ disciplina }) {
+  const { assuntos, discursivas = 0 } = disciplina;
+  const lista = (itens) => (
+    <ul>
+      {itens.map((assunto, indice) => (
+        <li key={indice}>{assunto}</li>
+      ))}
+    </ul>
+  );
+
+  if (discursivas === 0) return lista(assuntos);
+
+  const doDiscursivas = assuntos.slice(0, discursivas);
+  const dasObjetivas = assuntos.slice(discursivas);
+
+  return (
+    <>
+      <h4 className="grupo-questoes">{discursivas === 1 ? "Discursiva" : "Discursivas"}</h4>
+      {lista(doDiscursivas)}
+      {dasObjetivas.length > 0 && (
+        <>
+          <h4 className="grupo-questoes">{dasObjetivas.length === 1 ? "Objetiva" : "Objetivas"}</h4>
+          {lista(dasObjetivas)}
+        </>
+      )}
+    </>
+  );
+}
+
 function Edicoes() {
   const [cursos, setCursos] = useState([]);
   const [cursoSelecionado, setCursoSelecionado] = useState(null);
@@ -109,11 +140,7 @@ function Edicoes() {
                       </span>
                     </span>
                   </summary>
-                  <ul>
-                    {disciplina.assuntos.map((assunto, indice) => (
-                      <li key={indice}>{assunto}</li>
-                    ))}
-                  </ul>
+                  <AssuntosDaDisciplina disciplina={disciplina} />
                 </details>
               ))}
           </div>
