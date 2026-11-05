@@ -1,6 +1,7 @@
 import { Fragment, useState, useEffect } from "react";
 import { cursos as cursosAvaliaUfop } from "../data/avaliaufop";
 import { API_URL } from "../api";
+import TabelaQuestoes from "../components/TabelaQuestoes";
 
 // true quando a tela é de celular (mesmo limite do CSS: 760px)
 function useEhCelular() {
@@ -17,11 +18,18 @@ function useEhCelular() {
   return ehCelular;
 }
 
+const SUBTOPICOS = [
+  { chave: "assuntos", titulo: "Assuntos por disciplina" },
+  { chave: "questoes", titulo: "Acertos por questão" },
+];
+
 function Edicoes() {
   const [cursos, setCursos] = useState([]);
   const [cursoSelecionado, setCursoSelecionado] = useState(null);
   const [anoSelecionado, setAnoSelecionado] = useState(null);
   const [dadosDoCurso, setDadosDoCurso] = useState(null);
+  // o que mostrar dentro do curso: os assuntos por disciplina ou a tabela de acertos por questão
+  const [visao, setVisao] = useState("assuntos");
   const ehCelular = useEhCelular();
 
   useEffect(() => {
@@ -61,9 +69,9 @@ function Edicoes() {
   // "anos" já vem ordenado do mais recente pro mais antigo.
   const duasEdicoesMaisRecentes = curso ? curso.anos.slice(0, 2) : [];
 
-  // Anos disponíveis + disciplinas do curso escolhido.
-  // No desktop fica abaixo de todos os cards; no celular, logo abaixo do card do curso.
-  const detalhes = (
+  // Painel do curso escolhido, com dois subtópicos: assuntos por disciplina (o que já existia)
+  // e acertos por questão. No desktop fica abaixo de todos os cards; no celular, logo abaixo do card.
+  const visaoAssuntos = (
     <>
       {curso && (
         <div>
@@ -115,12 +123,35 @@ function Edicoes() {
     </>
   );
 
+  const detalhes = curso && (
+    <>
+      <div className="subtopicos" role="group" aria-label="O que ver neste curso">
+        {SUBTOPICOS.map((t) => (
+          <button
+            key={t.chave}
+            className={t.chave === visao ? "subtopico ativo" : "subtopico"}
+            aria-pressed={t.chave === visao}
+            onClick={() => setVisao(t.chave)}
+          >
+            {t.titulo}
+          </button>
+        ))}
+      </div>
+
+      {visao === "assuntos" ? (
+        visaoAssuntos
+      ) : (
+        <TabelaQuestoes key={curso.chave} chave={curso.chave} anos={curso.anosComQuestoes ?? []} />
+      )}
+    </>
+  );
+
   return (
     <div>
       <h1>Edições do Enade</h1>
       <p>
-        Escolha um curso e uma edição para ver quantas questões o Enade cobrou em cada disciplina e
-        quais assuntos apareceram, ajudando a direcionar os estudos.
+        Escolha um curso para ver o que o Enade cobrou em cada disciplina e como os concluintes se
+        saíram em cada questão, ajudando a direcionar os estudos.
       </p>
 
       <div className="card-grid">

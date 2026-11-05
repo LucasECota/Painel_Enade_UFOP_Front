@@ -16,7 +16,7 @@ const atalhos = [
   {
     to: "/edicoes",
     titulo: "Edições do Enade",
-    texto: "Consulte as disciplinas e assuntos cobrados em cada edição, por curso.",
+    texto: "Consulte as disciplinas, os assuntos e os acertos por questão do Enade, por curso.",
   },
   {
     to: "/resultados",

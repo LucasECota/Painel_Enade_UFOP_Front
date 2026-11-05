@@ -5,10 +5,15 @@ import { simularApi, simularTela } from "../test/api";
 import Edicoes from "./Edicoes";
 
 const cursos = [
-  { chave: "ec", nome: "Engenharia de Computação", anos: [2023, 2019, 2017] },
+  {
+    chave: "ec",
+    nome: "Engenharia de Computação",
+    anos: [2023, 2019, 2017],
+    anosComQuestoes: [2023],
+  },
   { chave: "ee", nome: "Engenharia Elétrica", anos: [2023, 2019] }, // a API ainda pode mandar; o site esconde
-  { chave: "ep", nome: "Engenharia de Produção", anos: [2023, 2019] },
-  { chave: "si", nome: "Sistemas de Informação", anos: [2021, 2017] },
+  { chave: "ep", nome: "Engenharia de Produção", anos: [2023, 2019], anosComQuestoes: [2023] },
+  { chave: "si", nome: "Sistemas de Informação", anos: [2021, 2017], anosComQuestoes: [] },
 ];
 
 const dadosDoCurso = {
@@ -24,11 +29,45 @@ const dadosDoCurso = {
   },
 };
 
+const tabelaDeQuestoes = {
+  curso: "ec",
+  ano: 2023,
+  fonte: "INEP — fonte de teste",
+  componentes: [
+    {
+      tipo: "especifico",
+      titulo: "Componente Específico",
+      questoes: [
+        {
+          numero: 11,
+          disciplina: "Redes de Computadores I",
+          tema: "Protocolo OSPF e algoritmo de Dijkstra",
+          situacao: "valida",
+          gabarito: "C",
+          acertos: {
+            curso: 44.4,
+            uf: 36.6,
+            regiao: 30.7,
+            catAdm: 37.0,
+            orgAcad: 34.2,
+            brasil: 33.4,
+          },
+          respostas: { A: 4.4, B: 15.6, C: 44.4, D: 22.2, E: 13.3, SI: 0 },
+        },
+      ],
+    },
+  ],
+};
+
 const cardDoCurso = (nome) => screen.getByRole("button", { name: new RegExp(nome) });
 
 async function renderizar({ celular = false } = {}) {
   simularTela({ celular });
-  const fetchFalso = simularApi({ "/enade/cursos": cursos, "/enade/ec": dadosDoCurso });
+  const fetchFalso = simularApi({
+    "/enade/cursos": cursos,
+    "/enade/ec/questoes": tabelaDeQuestoes,
+    "/enade/ec": dadosDoCurso,
+  });
   render(<Edicoes />);
   await screen.findByRole("button", { name: /Engenharia de Computação/ });
   return fetchFalso;
@@ -39,7 +78,7 @@ describe("Edições", () => {
     await renderizar();
 
     expect(screen.getByRole("heading", { name: "Edições do Enade" })).toBeInTheDocument();
-    expect(screen.getByText(/Escolha um curso e uma edição/)).toBeInTheDocument();
+    expect(screen.getByText(/Escolha um curso para ver o que o Enade cobrou/)).toBeInTheDocument();
   });
 
   it("mostra só os cursos do AvaliaUFOP, nessa ordem, e esconde Engenharia Elétrica", async () => {
@@ -124,6 +163,68 @@ describe("Edições", () => {
     expect(screen.getByRole("button", { name: "2021" })).toBeInTheDocument();
   });
 
+  describe("subtópicos do curso", () => {
+    it("ao escolher um curso aparecem os dois subtópicos, com os assuntos como padrão", async () => {
+      const usuario = userEvent.setup();
+      await renderizar();
+      await usuario.click(cardDoCurso("Computação"));
+
+      const assuntos = screen.getByRole("button", { name: "Assuntos por disciplina" });
+      const questoes = screen.getByRole("button", { name: "Acertos por questão" });
+      expect(assuntos).toHaveAttribute("aria-pressed", "true");
+      expect(questoes).toHaveAttribute("aria-pressed", "false");
+      expect(screen.getByText("Edições com assuntos disponíveis:")).toBeInTheDocument();
+    });
+
+    it("'Acertos por questão' mostra a tabela da edição mais recente e esconde os assuntos", async () => {
+      const usuario = userEvent.setup();
+      const fetchFalso = await renderizar();
+      await usuario.click(cardDoCurso("Computação"));
+      await usuario.click(screen.getByRole("button", { name: "Acertos por questão" }));
+
+      expect(await screen.findByText("Protocolo OSPF e algoritmo de Dijkstra")).toBeInTheDocument();
+      expect(fetchFalso).toHaveBeenCalledWith(`${API_URL}/enade/ec/questoes?ano=2023`);
+      expect(screen.queryByText("Edições com assuntos disponíveis:")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Acertos por questão" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+    });
+
+    it("dá para voltar para 'Assuntos por disciplina'", async () => {
+      const usuario = userEvent.setup();
+      await renderizar();
+      await usuario.click(cardDoCurso("Computação"));
+      await usuario.click(screen.getByRole("button", { name: "Acertos por questão" }));
+      await usuario.click(screen.getByRole("button", { name: "Assuntos por disciplina" }));
+
+      expect(screen.getByText("Edições com assuntos disponíveis:")).toBeInTheDocument();
+      expect(screen.queryByText("Protocolo OSPF e algoritmo de Dijkstra")).not.toBeInTheDocument();
+    });
+
+    it("curso sem tabela avisa que ainda não está disponível", async () => {
+      const usuario = userEvent.setup();
+      await renderizar();
+      await usuario.click(cardDoCurso("Sistemas"));
+      await usuario.click(screen.getByRole("button", { name: "Acertos por questão" }));
+
+      expect(screen.getByText(/ainda não está disponível para este curso/)).toBeInTheDocument();
+    });
+
+    it("a escolha do subtópico continua ao trocar de curso", async () => {
+      const usuario = userEvent.setup();
+      await renderizar();
+      await usuario.click(cardDoCurso("Computação"));
+      await usuario.click(screen.getByRole("button", { name: "Acertos por questão" }));
+      await usuario.click(cardDoCurso("Sistemas"));
+
+      expect(screen.getByRole("button", { name: "Acertos por questão" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+    });
+  });
+
   describe("posição do painel de detalhes", () => {
     it("no computador fica abaixo de todos os cards", async () => {
       const usuario = userEvent.setup();
@@ -132,7 +233,9 @@ describe("Edições", () => {
 
       expect(document.querySelector(".detalhes-curso")).not.toBeInTheDocument();
       const grade = document.querySelector(".card-grid");
-      expect(grade.nextElementSibling).toHaveTextContent("Edições com assuntos disponíveis:");
+      // logo abaixo da grade vêm os dois subtópicos, e depois o conteúdo do curso
+      expect(grade.nextElementSibling).toHaveClass("subtopicos");
+      expect(grade.parentElement).toHaveTextContent("Edições com assuntos disponíveis:");
     });
 
     it("no celular fica logo abaixo do card do curso escolhido e empurra os outros", async () => {
