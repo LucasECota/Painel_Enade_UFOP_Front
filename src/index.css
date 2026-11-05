@@ -906,6 +906,39 @@ tbody tr:nth-child(even) {
   margin-bottom: 4px;
 }
 
+/* discursivas à vista, fora das caixas */
+.discursivas-resumo {
+  margin: 16px 0 4px;
+  padding: 12px 16px;
+  background: #fbf3f5;
+  border: 1px solid var(--borda);
+  border-left: 4px solid var(--vinho);
+  border-radius: 4px;
+}
+
+.discursivas-resumo strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--vinho);
+}
+
+.discursivas-resumo ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.discursivas-resumo li span {
+  color: var(--cinza);
+}
+
+.tag-discursiva {
+  background: var(--vinho);
+  color: #fff;
+}
+
 /* "Discursiva" e "Objetiva" dentro da disciplina */
 .disciplina .grupo-questoes {
   margin: 0;
