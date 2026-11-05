@@ -60,28 +60,9 @@ function ListaDeDisciplinas({ titulo, disciplinas }) {
   const comAssuntos = disciplinas.filter((disciplina) => disciplina.assuntos.length > 0);
   if (comAssuntos.length === 0) return null;
 
-  // as discursivas ficam à vista, fora das caixas (são os primeiros assuntos de cada disciplina)
-  const discursivas = comAssuntos.flatMap((d) =>
-    d.assuntos.slice(0, d.discursivas ?? 0).map((tema) => ({ disciplina: d.nome, tema })),
-  );
-
   return (
     <>
       <h2>{titulo}</h2>
-      {discursivas.length > 0 && (
-        <div className="discursivas-resumo">
-          <strong>
-            {discursivas.length === 1 ? "Questão discursiva" : "Questões discursivas"}
-          </strong>
-          <ul>
-            {discursivas.map((q) => (
-              <li key={`${q.disciplina}-${q.tema}`}>
-                {q.tema} <span>({q.disciplina})</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
       <div className="disciplinas">
         {comAssuntos
           .slice()

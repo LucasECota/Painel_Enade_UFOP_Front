@@ -170,18 +170,17 @@ describe("Edições", () => {
     expect(screen.getByText("Gênero e trabalho")).toBeInTheDocument();
   });
 
-  it("deixa as discursivas à vista, fora das caixas das disciplinas", async () => {
+  it("mostra o selo de discursiva na caixa, mesmo fechada, só nas disciplinas que têm", async () => {
     const usuario = userEvent.setup();
     await renderizar();
     await usuario.click(cardDoCurso("Computação"));
     await usuario.click(screen.getByRole("button", { name: "2023" }));
     await screen.findByText("Redes de Computadores I");
 
-    const resumo = document.querySelector(".discursivas-resumo");
-    expect(resumo).toHaveTextContent("Questão discursiva");
-    expect(resumo).toHaveTextContent("Busca binária (Algoritmos e Estruturas de Dados I)");
-    expect(resumo).not.toHaveTextContent("Pilhas e filas"); // objetiva
-    expect(screen.getByText("1 discursiva")).toBeInTheDocument(); // selo na caixa, mesmo fechada
+    expect(screen.getAllByText("1 discursiva")).toHaveLength(1);
+    const aed = screen.getByText("Algoritmos e Estruturas de Dados I").closest("details");
+    expect(aed).toHaveTextContent("1 discursiva");
+    expect(document.querySelector(".discursivas-resumo")).toBeNull();
   });
 
   it("separa os assuntos das questões discursivas e das objetivas", async () => {
