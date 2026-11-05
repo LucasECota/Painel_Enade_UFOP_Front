@@ -54,6 +54,37 @@ function AssuntosDaDisciplina({ disciplina }) {
   );
 }
 
+// Disciplinas de um componente da prova, da que tem mais questões para a que tem menos.
+// As sem assunto cadastrado ficam de fora.
+function ListaDeDisciplinas({ titulo, disciplinas }) {
+  const comAssuntos = disciplinas.filter((disciplina) => disciplina.assuntos.length > 0);
+  if (comAssuntos.length === 0) return null;
+
+  return (
+    <>
+      <h2>{titulo}</h2>
+      <div className="disciplinas">
+        {comAssuntos
+          .slice()
+          .sort((a, b) => b.qtd - a.qtd)
+          .map((disciplina) => (
+            <details className="disciplina" key={disciplina.nome}>
+              <summary>
+                <span className="disciplina-nome">{disciplina.nome}</span>
+                <span className="disciplina-info">
+                  <span className="tag">
+                    {disciplina.qtd} {disciplina.qtd === 1 ? "questão" : "questões"}
+                  </span>
+                </span>
+              </summary>
+              <AssuntosDaDisciplina disciplina={disciplina} />
+            </details>
+          ))}
+      </div>
+    </>
+  );
+}
+
 function Edicoes() {
   const [cursos, setCursos] = useState([]);
   const [cursoSelecionado, setCursoSelecionado] = useState(null);
@@ -124,26 +155,14 @@ function Edicoes() {
           <p>Formação Geral: {dadosDoCurso.fg.total}</p>
           <p>Componente Específico: {dadosDoCurso.ce.total}</p>
 
-          <h2>Disciplinas (Componente Específico) — {anoSelecionado}</h2>
-          <div className="disciplinas">
-            {dadosDoCurso.ce.disciplinas
-              .filter((disciplina) => disciplina.assuntos.length > 0)
-              .slice()
-              .sort((a, b) => b.qtd - a.qtd)
-              .map((disciplina) => (
-                <details className="disciplina" key={disciplina.nome}>
-                  <summary>
-                    <span className="disciplina-nome">{disciplina.nome}</span>
-                    <span className="disciplina-info">
-                      <span className="tag">
-                        {disciplina.qtd} {disciplina.qtd === 1 ? "questão" : "questões"}
-                      </span>
-                    </span>
-                  </summary>
-                  <AssuntosDaDisciplina disciplina={disciplina} />
-                </details>
-              ))}
-          </div>
+          <ListaDeDisciplinas
+            titulo={`Disciplinas (Formação Geral) — ${anoSelecionado}`}
+            disciplinas={dadosDoCurso.fg.disciplinas}
+          />
+          <ListaDeDisciplinas
+            titulo={`Disciplinas (Componente Específico) — ${anoSelecionado}`}
+            disciplinas={dadosDoCurso.ce.disciplinas}
+          />
         </div>
       )}
     </>

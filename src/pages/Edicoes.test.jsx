@@ -19,7 +19,12 @@ const cursos = [
 
 const dadosDoCurso = {
   totalQuestoes: 40,
-  fg: { total: 10, disciplinas: [] },
+  fg: {
+    total: 10,
+    disciplinas: [
+      { nome: "Sociologia", qtd: 2, assuntos: ["Desigualdade social", "Gênero e trabalho"] },
+    ],
+  },
   ce: {
     total: 30,
     disciplinas: [
@@ -140,12 +145,29 @@ describe("Edições", () => {
     await screen.findByText("Redes de Computadores I");
 
     const nomes = [...document.querySelectorAll(".disciplina-nome")].map((e) => e.textContent);
-    // 3 questões, depois 2, depois 1; a disciplina sem assuntos fica de fora
+    // Formação Geral primeiro; no Componente Específico, 3 questões, depois 2, depois 1;
+    // a disciplina sem assuntos fica de fora
     expect(nomes).toEqual([
+      "Sociologia",
       "Redes de Computadores I",
       "Algoritmos e Estruturas de Dados I",
       "Compiladores I",
     ]);
+  });
+
+  it("mostra as disciplinas e os assuntos da Formação Geral antes das do Componente Específico", async () => {
+    const usuario = userEvent.setup();
+    await renderizar();
+    await usuario.click(cardDoCurso("Computação"));
+    await usuario.click(screen.getByRole("button", { name: "2023" }));
+    await screen.findByText("Sociologia");
+
+    const titulos = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
+    expect(titulos).toEqual([
+      "Disciplinas (Formação Geral) — 2023",
+      "Disciplinas (Componente Específico) — 2023",
+    ]);
+    expect(screen.getByText("Gênero e trabalho")).toBeInTheDocument();
   });
 
   it("separa os assuntos das questões discursivas e das objetivas", async () => {
