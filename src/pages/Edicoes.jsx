@@ -65,9 +65,8 @@ function Edicoes() {
   // Pega o objeto do curso selecionado, pra ter acesso à lista de "anos"
   const curso = cursos.find((c) => c.chave === cursoSelecionado);
 
-  // As duas edições mais recentes são as que têm assunto cadastrado.
-  // "anos" já vem ordenado do mais recente pro mais antigo.
-  const duasEdicoesMaisRecentes = curso ? curso.anos.slice(0, 2) : [];
+  // Edições com assunto cadastrado, da mais recente para a mais antiga (a API informa quais são)
+  const edicoesComAssuntos = curso ? (curso.anosComAssuntos ?? curso.anos.slice(0, 2)) : [];
 
   // Painel do curso escolhido, com dois subtópicos: assuntos por disciplina (o que já existia)
   // e acertos por questão. No desktop fica abaixo de todos os cards; no celular, logo abaixo do card.
@@ -76,7 +75,7 @@ function Edicoes() {
       {curso && (
         <div>
           <p>Edições com assuntos disponíveis:</p>
-          {duasEdicoesMaisRecentes.map((ano) => (
+          {edicoesComAssuntos.map((ano) => (
             <button
               key={ano}
               className={ano === anoSelecionado ? "btn btn-selecionado" : "btn"}

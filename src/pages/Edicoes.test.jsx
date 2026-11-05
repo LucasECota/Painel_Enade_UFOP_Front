@@ -9,6 +9,7 @@ const cursos = [
     chave: "ec",
     nome: "Engenharia de Computação",
     anos: [2023, 2019, 2017],
+    anosComAssuntos: [2023, 2017], // 2019 não tem assuntos: o site só mostra as edições que a API indicar
     anosComQuestoes: [2023],
   },
   { chave: "ee", nome: "Engenharia Elétrica", anos: [2023, 2019] }, // a API ainda pode mandar; o site esconde
@@ -93,15 +94,25 @@ describe("Edições", () => {
     expect(screen.queryByText("Engenharia Elétrica")).not.toBeInTheDocument();
   });
 
-  it("ao escolher um curso mostra as duas edições mais recentes", async () => {
+  it("ao escolher um curso mostra todas as edições que têm assuntos", async () => {
     const usuario = userEvent.setup();
     await renderizar();
 
     await usuario.click(cardDoCurso("Computação"));
 
     expect(screen.getByRole("button", { name: "2023" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "2019" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "2017" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "2017" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "2019" })).not.toBeInTheDocument();
+  });
+
+  it("se a API não informar as edições com assuntos, usa as duas mais recentes", async () => {
+    const usuario = userEvent.setup();
+    await renderizar();
+
+    await usuario.click(cardDoCurso("Sistemas"));
+
+    expect(screen.getByRole("button", { name: "2021" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "2017" })).toBeInTheDocument();
   });
 
   it("ao escolher o ano busca na API o curso e o ano certos", async () => {

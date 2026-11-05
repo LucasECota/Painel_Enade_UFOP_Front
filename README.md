@@ -46,8 +46,10 @@ linha tracejada marcando os 60% exigidos para o certificado. Os dados vêm de ex
 <img src="docs/screenshots/03-desempenho.png" alt="Painel de desempenho dos alunos no AvaliaUFOP" width="860">
 
 ### Edições
-O que o Enade cobrou em cada edição: quantas questões por disciplina e quais assuntos, para
-direcionar os estudos. Cada disciplina abre e fecha para não sobrecarregar a leitura.
+O que o Enade cobrou em cada edição (2014 em diante): quantas questões por disciplina e quais
+assuntos, para direcionar os estudos, e a tabela de **acertos por questão** do Relatório de Curso do
+INEP, com a disciplina e o tema de cada uma. Os dois ficam em subtópicos clicáveis; cada disciplina
+abre e fecha para não sobrecarregar a leitura.
 
 <img src="docs/screenshots/04-edicoes.png" alt="Disciplinas e assuntos do Enade 2023 de Engenharia de Computação" width="860">
 
@@ -77,7 +79,7 @@ Todas as telas foram pensadas para telas pequenas, com menu recolhido e gráfico
 - **Gráficos feitos à mão, sem biblioteca.** As barras, as colunas e a linha dos 60% são React e CSS
   puros. A linha tracejada é um único elemento posicionado por variáveis CSS, que atravessa todas as
   barras e se adapta ao layout de computador e de celular.
-- **Testes automatizados:** 61 testes no front (Vitest + Testing Library) e 88 na API. Cobrem os
+- **Testes automatizados:** 78 testes no front (Vitest + Testing Library) e 134 na API. Cobrem os
   dados exibidos, a troca de curso, os links, os estados de erro e a integridade dos números copiados
   dos relatórios do INEP.
 - **Integração contínua** no GitHub Actions (lint, testes, build e auditoria de segurança) e
