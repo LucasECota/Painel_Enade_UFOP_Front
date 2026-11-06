@@ -1,6 +1,8 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { vi } from "vitest";
 import { API_URL } from "../api";
+import { limparCacheDoDesempenho } from "../desempenhoCache";
 import { simularApi, simularTela } from "../test/api";
 import Edicoes from "./Edicoes";
 
@@ -21,12 +23,14 @@ const dadosDoCurso = {
   totalQuestoes: 40,
   fg: {
     total: 10,
+    discursivas: 2,
     disciplinas: [
       { nome: "Sociologia", qtd: 2, assuntos: ["Desigualdade social", "Gênero e trabalho"] },
     ],
   },
   ce: {
     total: 30,
+    discursivas: 3,
     disciplinas: [
       { nome: "Compiladores I", qtd: 1, assuntos: ["Análise léxica"] },
       { nome: "Redes de Computadores I", qtd: 3, assuntos: ["OSPF", "TCP e UDP"] },
@@ -77,6 +81,20 @@ async function renderizar({ celular = false } = {}) {
   simularTela({ celular });
   const fetchFalso = simularApi({
     "/enade/cursos": cursos,
+    "/enade/ec/desempenho-areas": {
+      curso: "ec",
+      nome: "Engenharia de Computação",
+      edicoes: [2023],
+      porEdicao: [
+        {
+          ano: 2023,
+          areas: [
+            { componente: "especifico", disciplina: "Redes", questoes: 1, ufop: 50, brasil: 40 },
+          ],
+          temas: [],
+        },
+      ],
+    },
     "/enade/ec/questoes": tabelaDeQuestoes,
     "/enade/ec": dadosDoCurso,
   });
@@ -86,6 +104,8 @@ async function renderizar({ celular = false } = {}) {
 }
 
 describe("Edições", () => {
+  beforeEach(() => limparCacheDoDesempenho());
+
   it("explica o que a página mostra", async () => {
     await renderizar();
 
@@ -135,6 +155,121 @@ describe("Edições", () => {
     await screen.findByText(/Total de questões: 40/);
 
     expect(fetchFalso).toHaveBeenCalledWith(`${API_URL}/enade/ec?ano=2023`);
+  });
+
+  it("clicar de novo no mesmo ano esconde o conteúdo dos assuntos", async () => {
+    const usuario = userEvent.setup();
+    await renderizar();
+    await usuario.click(cardDoCurso("Computação"));
+
+    expect(screen.queryByText(/Total de questões/)).not.toBeInTheDocument();
+    await usuario.click(screen.getByRole("button", { name: "2023" }));
+    await screen.findByText(/Total de questões: 40/);
+
+    await usuario.click(screen.getByRole("button", { name: "2023" }));
+    expect(screen.queryByText(/Total de questões/)).not.toBeInTheDocument();
+    expect(document.querySelector(".disciplinas")).toBeNull();
+  });
+
+  it("mostra quantas questões são objetivas e quantas são discursivas, no total e em cada componente", async () => {
+    const usuario = userEvent.setup();
+    await renderizar();
+    await usuario.click(cardDoCurso("Computação"));
+    await usuario.click(screen.getByRole("button", { name: "2023" }));
+
+    expect(
+      await screen.findByText("Total de questões: 40 (35 objetivas e 5 discursivas)"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Formação Geral: 10 (8 objetivas e 2 discursivas)"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Componente Específico: 30 (27 objetivas e 3 discursivas)"),
+    ).toBeInTheDocument();
+  });
+
+  describe("troca de ano sem piscar", () => {
+    // Respostas controladas à mão: cada pedido de ?ano=... só responde quando o teste mandar
+    function apiComRespostasManuais() {
+      simularTela({ celular: false });
+      const pendentes = {};
+      vi.stubGlobal(
+        "fetch",
+        vi.fn((url) => {
+          const u = String(url);
+          const responder = (dados) =>
+            Promise.resolve({ ok: true, json: () => Promise.resolve(dados) });
+          if (u.endsWith("/enade/cursos")) return responder(cursos);
+          const ano = u.match(/\?ano=(\d+)/)?.[1];
+          return new Promise((resolve) => {
+            pendentes[ano] = () => resolve({ ok: true, json: () => Promise.resolve(dadosDoCurso) });
+          });
+        }),
+      );
+      return pendentes;
+    }
+
+    it("ao trocar de ano, o conteúdo do ano anterior fica na tela (com o título do ano certo) até o novo chegar", async () => {
+      const usuario = userEvent.setup();
+      const pendentes = apiComRespostasManuais();
+      render(<Edicoes />);
+      await screen.findByRole("button", { name: /Engenharia de Computação/ });
+      await usuario.click(cardDoCurso("Computação"));
+
+      await usuario.click(screen.getByRole("button", { name: "2023" }));
+      pendentes["2023"]();
+      expect(
+        await screen.findByText("Disciplinas (Componente Específico) — 2023"),
+      ).toBeInTheDocument();
+
+      await usuario.click(screen.getByRole("button", { name: "2017" }));
+
+      // a resposta de 2017 ainda não chegou: o conteúdo de 2023 continua (sem a página encolher)
+      expect(screen.getByText("Disciplinas (Componente Específico) — 2023")).toBeInTheDocument();
+      expect(document.querySelector(".carregando")).not.toBeNull();
+
+      pendentes["2017"]();
+      expect(
+        await screen.findByText("Disciplinas (Componente Específico) — 2017"),
+      ).toBeInTheDocument();
+      expect(document.querySelector(".carregando")).toBeNull();
+    });
+
+    it("uma resposta atrasada de outro ano não sobrescreve a do ano clicado por último", async () => {
+      const usuario = userEvent.setup();
+      const pendentes = apiComRespostasManuais();
+      render(<Edicoes />);
+      await screen.findByRole("button", { name: /Engenharia de Computação/ });
+      await usuario.click(cardDoCurso("Computação"));
+
+      await usuario.click(screen.getByRole("button", { name: "2023" }));
+      await usuario.click(screen.getByRole("button", { name: "2017" }));
+      pendentes["2017"]();
+      await screen.findByText("Disciplinas (Componente Específico) — 2017");
+
+      pendentes["2023"](); // a resposta de 2023 chega atrasada
+      await waitFor(() => {
+        expect(screen.getByText("Disciplinas (Componente Específico) — 2017")).toBeInTheDocument();
+      });
+      expect(
+        screen.queryByText("Disciplinas (Componente Específico) — 2023"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("clicar de novo no mesmo ano esconde tudo na hora, sem esperar a rede", async () => {
+      const usuario = userEvent.setup();
+      const pendentes = apiComRespostasManuais();
+      render(<Edicoes />);
+      await screen.findByRole("button", { name: /Engenharia de Computação/ });
+      await usuario.click(cardDoCurso("Computação"));
+      await usuario.click(screen.getByRole("button", { name: "2023" }));
+      pendentes["2023"]();
+      await screen.findByText("Disciplinas (Componente Específico) — 2023");
+
+      await usuario.click(screen.getByRole("button", { name: "2023" }));
+
+      expect(screen.queryByText(/Disciplinas \(/)).not.toBeInTheDocument();
+    });
   });
 
   it("ordena as disciplinas pela quantidade de questões e esconde as sem assunto", async () => {
@@ -237,7 +372,7 @@ describe("Edições", () => {
   });
 
   describe("subtópicos do curso", () => {
-    it("ao escolher um curso aparecem os dois subtópicos, com os assuntos como padrão", async () => {
+    it("ao escolher um curso aparecem os quatro subtópicos, com os assuntos como padrão", async () => {
       const usuario = userEvent.setup();
       await renderizar();
       await usuario.click(cardDoCurso("Computação"));
@@ -246,15 +381,23 @@ describe("Edições", () => {
       const questoes = screen.getByRole("button", { name: "Acertos por questão" });
       expect(assuntos).toHaveAttribute("aria-pressed", "true");
       expect(questoes).toHaveAttribute("aria-pressed", "false");
+      expect(screen.getByRole("button", { name: "Evolução por área" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Mais acertos e erros" })).toBeInTheDocument();
+
       expect(screen.getByText("Edições com assuntos disponíveis:")).toBeInTheDocument();
     });
 
-    it("'Acertos por questão' mostra a tabela da edição mais recente e esconde os assuntos", async () => {
+    it("'Acertos por questão' só mostra a tabela depois de clicar no ano, e esconde os assuntos", async () => {
       const usuario = userEvent.setup();
       const fetchFalso = await renderizar();
       await usuario.click(cardDoCurso("Computação"));
       await usuario.click(screen.getByRole("button", { name: "Acertos por questão" }));
 
+      // só os botões de ano: a tabela espera o clique
+      expect(screen.getByText("Edições com a tabela disponível:")).toBeInTheDocument();
+      expect(screen.queryByText("Protocolo OSPF e algoritmo de Dijkstra")).not.toBeInTheDocument();
+
+      await usuario.click(screen.getByRole("button", { name: "2023" }));
       expect(await screen.findByText("Protocolo OSPF e algoritmo de Dijkstra")).toBeInTheDocument();
       expect(fetchFalso).toHaveBeenCalledWith(`${API_URL}/enade/ec/questoes?ano=2023`);
       expect(screen.queryByText("Edições com assuntos disponíveis:")).not.toBeInTheDocument();
@@ -262,6 +405,50 @@ describe("Edições", () => {
         "aria-pressed",
         "true",
       );
+    });
+
+    it("'Evolução por área' e 'Mais acertos e erros' são subpáginas separadas, cada uma com a sua parte", async () => {
+      const usuario = userEvent.setup();
+      const fetchFalso = await renderizar();
+      await usuario.click(cardDoCurso("Computação"));
+
+      await usuario.click(screen.getByRole("button", { name: "Evolução por área" }));
+      expect(
+        await screen.findByText("Desempenho de cada área ao longo das edições"),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText("Áreas e temas com mais acertos e mais erros"),
+      ).not.toBeInTheDocument();
+      expect(fetchFalso).toHaveBeenCalledWith(`${API_URL}/enade/ec/desempenho-areas`);
+      expect(screen.queryByText("Edições com assuntos disponíveis:")).not.toBeInTheDocument();
+
+      await usuario.click(screen.getByRole("button", { name: "Mais acertos e erros" }));
+      expect(
+        await screen.findByText("Áreas e temas com mais acertos e mais erros"),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText("Desempenho de cada área ao longo das edições"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("o desempenho por área é buscado já ao escolher o curso e só uma vez, então trocar de subtópico não pisca", async () => {
+      const usuario = userEvent.setup();
+      const fetchFalso = await renderizar();
+      const pedidosDoDesempenho = () =>
+        fetchFalso.mock.calls.filter(([url]) => String(url).includes("/desempenho-areas")).length;
+
+      await usuario.click(cardDoCurso("Computação"));
+      expect(pedidosDoDesempenho()).toBe(1); // antes de abrir qualquer subtópico
+
+      await usuario.click(screen.getByRole("button", { name: "Evolução por área" }));
+      await screen.findByText("Desempenho de cada área ao longo das edições");
+      await usuario.click(screen.getByRole("button", { name: "Mais acertos e erros" }));
+      // a tela já nasce completa, sem passar por um estado vazio
+      expect(screen.getByText("Áreas e temas com mais acertos e mais erros")).toBeInTheDocument();
+      await usuario.click(screen.getByRole("button", { name: "Evolução por área" }));
+      expect(screen.getByText("Desempenho de cada área ao longo das edições")).toBeInTheDocument();
+
+      expect(pedidosDoDesempenho()).toBe(1);
     });
 
     it("dá para voltar para 'Assuntos por disciplina'", async () => {

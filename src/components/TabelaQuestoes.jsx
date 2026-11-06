@@ -11,12 +11,22 @@ const ALTERNATIVAS = ["A", "B", "C", "D", "E", "SI"];
 // colunas de "Percentual de acertos": as duas primeiras e a última aparecem sempre,
 // o resto só quando o leitor pede "todas as colunas"
 const COLUNAS_ACERTO = [
-  { chave: "curso", titulo: "Curso", dica: "Concluintes do curso", sempre: true },
-  { chave: "uf", titulo: "UF", dica: "Concluintes da mesma UF" },
+  {
+    chave: "curso",
+    titulo: "UFOP",
+    dica: "Concluintes deste curso na UFOP (João Monlevade)",
+    sempre: true,
+  },
+  { chave: "uf", titulo: "Estado", dica: "Concluintes do mesmo curso no mesmo estado (UF)" },
   { chave: "regiao", titulo: "Região", dica: "Concluintes da mesma região" },
   { chave: "catAdm", titulo: "Cat. adm.", dica: "Mesma categoria administrativa" },
   { chave: "orgAcad", titulo: "Org. acad.", dica: "Mesma organização acadêmica" },
-  { chave: "brasil", titulo: "Brasil", dica: "Concluintes do Brasil", sempre: true },
+  {
+    chave: "brasil",
+    titulo: "Brasil",
+    dica: "Concluintes do mesmo curso em todo o Brasil",
+    sempre: true,
+  },
 ];
 
 // Curso acima ou abaixo da média do Brasil: só uma cor discreta no número
@@ -42,7 +52,7 @@ function TabelaDoComponente({ componente, completa }) {
               <th rowSpan={2}>Tema</th>
               <th colSpan={colunasAcerto.length}>% de acertos</th>
               <th rowSpan={2}>Gabarito</th>
-              {completa && <th colSpan={ALTERNATIVAS.length}>Respostas do curso (%)</th>}
+              {completa && <th colSpan={ALTERNATIVAS.length}>Respostas da UFOP (%)</th>}
             </tr>
             <tr>
               {colunasAcerto.map((c) => (
@@ -99,10 +109,23 @@ function TabelaDoComponente({ componente, completa }) {
 // Tabela de acertos por questão de um curso, com a disciplina e o tema de cada uma.
 // "anos" são as edições que têm a tabela (do mais recente para o mais antigo).
 function TabelaQuestoes({ chave, anos }) {
-  const [ano, setAno] = useState(anos[0] ?? null);
+  const [ano, setAno] = useState(null); // nada aparece até o leitor clicar num ano
   const [dados, setDados] = useState(null);
   const [erro, setErro] = useState(false);
   const [completa, setCompleta] = useState(false);
+
+  // Clicar num ano mostra a tabela dele; clicar de novo no mesmo ano esconde.
+  // Ao trocar de ano, a tabela anterior fica na tela até a nova chegar (apagar antes fazia a
+  // página encolher e crescer de novo, e isso aparecia como uma piscada).
+  function escolherAno(a) {
+    if (a === ano) {
+      setAno(null);
+      setDados(null);
+      setErro(false);
+    } else {
+      setAno(a);
+    }
+  }
 
   useEffect(() => {
     if (!ano) return;
@@ -140,42 +163,50 @@ function TabelaQuestoes({ chave, anos }) {
   return (
     <div>
       <p>
-        Veja quantos concluintes acertaram cada questão do Enade, comparando o curso com o Brasil, e
+        Veja quantos concluintes acertaram cada questão do Enade, comparando a UFOP com o Brasil, e
         a disciplina e o tema de cada uma.
       </p>
 
-      {anos.length > 1 && (
-        <div>
-          <p>Edições com a tabela disponível:</p>
-          {anos.map((a) => (
-            <button
-              key={a}
-              className={a === ano ? "btn btn-selecionado" : "btn"}
-              onClick={() => setAno(a)}
-            >
-              {a}
-            </button>
-          ))}
-        </div>
-      )}
+      <div>
+        <p>Edições com a tabela disponível:</p>
+        {anos.map((a) => (
+          <button
+            key={a}
+            className={a === ano ? "btn btn-selecionado" : "btn"}
+            onClick={() => escolherAno(a)}
+          >
+            {a}
+          </button>
+        ))}
+      </div>
 
       {erro && <p className="aviso">Não foi possível carregar a tabela de questões.</p>}
 
       {dados && (
-        <>
+        <div className={dados.ano === ano ? undefined : "carregando"}>
           <h2>Acertos por questão — Enade {dados.ano}</h2>
-          <button className="btn btn-claro" onClick={() => setCompleta((v) => !v)}>
-            {completa ? "Ver menos colunas" : "Ver todas as colunas"}
-          </button>
+
+          <div className="acoes-tabela">
+            <button className="btn btn-claro" onClick={() => setCompleta((v) => !v)}>
+              {completa ? "Ver menos colunas" : "Ver todas as colunas"}
+            </button>
+            <a
+              className="btn btn-link"
+              href={`${API_URL}/relatorios/curso/${chave}/${dados.ano}/download`}
+            >
+              Baixar relatório do INEP (PDF)
+            </a>
+          </div>
 
           {dados.componentes.map((componente) => (
             <TabelaDoComponente key={componente.tipo} componente={componente} completa={completa} />
           ))}
 
           <p className="nota">
-            <strong>% de acertos:</strong> parcela dos concluintes que acertou a questão.{" "}
-            <strong>Desconsiderada:</strong> o INEP deixou a questão fora do cálculo da nota
-            (critério estatístico). <strong>Anulada:</strong> anulada pela comissão.
+            <strong>% de acertos:</strong> parcela dos concluintes que acertou a questão. A coluna
+            UFOP é a dos concluintes deste curso na UFOP; as demais, dos concluintes do mesmo curso
+            nos outros grupos. <strong>Desconsiderada:</strong> o INEP deixou a questão fora do
+            cálculo da nota (critério estatístico). <strong>Anulada:</strong> anulada pela comissão.
             {completa && (
               <>
                 {" "}
@@ -184,7 +215,7 @@ function TabelaQuestoes({ chave, anos }) {
             )}
           </p>
           <p className="nota">Fonte: {dados.fonte}.</p>
-        </>
+        </div>
       )}
     </div>
   );

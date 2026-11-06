@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { vi } from "vitest";
 import { API_URL } from "../api";
 import { simularApi } from "../test/api";
 import TabelaQuestoes from "./TabelaQuestoes";
@@ -57,10 +58,14 @@ const tabela = (ano = 2023) => ({
 const linha = (numero) =>
   screen.getByText(String(numero), { selector: "td.questao-numero" }).closest("tr");
 
+// nada aparece até o leitor clicar no ano
+const abrirAno = (ano) => userEvent.click(screen.getByRole("button", { name: String(ano) }));
+
 describe("TabelaQuestoes", () => {
   it("mostra um bloco para Formação Geral e outro para Componente Específico", async () => {
     simularApi({ "/enade/ec/questoes": tabela() });
     render(<TabelaQuestoes chave="ec" anos={[2023]} />);
+    await abrirAno(2023);
 
     expect(await screen.findByRole("heading", { name: "Formação Geral" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Componente Específico" })).toBeInTheDocument();
@@ -69,9 +74,24 @@ describe("TabelaQuestoes", () => {
     ).toBeInTheDocument();
   });
 
-  it("busca a tabela do curso e do ano mais recente", async () => {
+  it("tem um link para baixar o relatório do curso e do ano que está na tabela", async () => {
+    simularApi({ "/enade/ec/questoes": tabela(2017) });
+    render(<TabelaQuestoes chave="ec" anos={[2017]} />);
+    await abrirAno(2017);
+
+    const link = await screen.findByRole("link", { name: "Baixar relatório do INEP (PDF)" });
+    expect(link).toHaveAttribute("href", `${API_URL}/relatorios/curso/ec/2017/download`);
+    // fica em cima das tabelas, antes de qualquer uma
+    const primeiraTabela = document.querySelector("table");
+    expect(
+      link.compareDocumentPosition(primeiraTabela) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("busca a tabela do curso e do ano clicado", async () => {
     const fetchFalso = simularApi({ "/enade/ec/questoes": tabela() });
     render(<TabelaQuestoes chave="ec" anos={[2023, 2019]} />);
+    await abrirAno(2023);
 
     await screen.findByText("Tema da questão 10");
     expect(fetchFalso).toHaveBeenCalledWith(`${API_URL}/enade/ec/questoes?ano=2023`);
@@ -80,6 +100,7 @@ describe("TabelaQuestoes", () => {
   it("depois do número da questão vêm as colunas de disciplina e tema", async () => {
     simularApi({ "/enade/ec/questoes": tabela() });
     render(<TabelaQuestoes chave="ec" anos={[2023]} />);
+    await abrirAno(2023);
     await screen.findByText("Tema da questão 10");
 
     const celulas = [...linha(10).querySelectorAll("td")].map((c) => c.textContent);
@@ -89,6 +110,7 @@ describe("TabelaQuestoes", () => {
   it("mostra por padrão só o curso, o Brasil e o gabarito, com vírgula e uma casa decimal", async () => {
     simularApi({ "/enade/ec/questoes": tabela() });
     render(<TabelaQuestoes chave="ec" anos={[2023]} />);
+    await abrirAno(2023);
     await screen.findByText("Tema da questão 10");
 
     const celulas = [...linha(10).querySelectorAll("td")].map((c) => c.textContent);
@@ -100,19 +122,20 @@ describe("TabelaQuestoes", () => {
       "38,2",
       "C",
     ]);
-    expect(screen.queryByRole("columnheader", { name: "UF" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", { name: "Estado" })).not.toBeInTheDocument();
   });
 
   it("'Ver todas as colunas' acrescenta UF, região, categoria, organização e as respostas A–E", async () => {
     const usuario = userEvent.setup();
     simularApi({ "/enade/ec/questoes": tabela() });
     render(<TabelaQuestoes chave="ec" anos={[2023]} />);
+    await abrirAno(2023);
     await screen.findByText("Tema da questão 10");
 
     await usuario.click(screen.getByRole("button", { name: "Ver todas as colunas" }));
 
     for (const titulo of [
-      "UF",
+      "Estado",
       "Região",
       "Cat. adm.",
       "Org. acad.",
@@ -151,6 +174,7 @@ describe("TabelaQuestoes", () => {
     const usuario = userEvent.setup();
     simularApi({ "/enade/ec/questoes": tabela() });
     render(<TabelaQuestoes chave="ec" anos={[2023]} />);
+    await abrirAno(2023);
     await screen.findByText("Tema da questão 10");
     await usuario.click(screen.getByRole("button", { name: "Ver todas as colunas" }));
 
@@ -161,6 +185,7 @@ describe("TabelaQuestoes", () => {
   it("destaca em cor discreta se o curso ficou acima ou abaixo do Brasil", async () => {
     simularApi({ "/enade/ec/questoes": tabela() });
     render(<TabelaQuestoes chave="ec" anos={[2023]} />);
+    await abrirAno(2023);
     await screen.findByText("Tema da questão 10");
 
     expect(within(linha(10)).getByText("31,1")).toHaveClass("curso-abaixo");
@@ -170,6 +195,7 @@ describe("TabelaQuestoes", () => {
   it("questão sem disciplina ou tema mostra um traço", async () => {
     simularApi({ "/enade/ec/questoes": tabela() });
     render(<TabelaQuestoes chave="ec" anos={[2023]} />);
+    await abrirAno(2023);
     await screen.findByText("Tema da questão 10");
 
     const celulas = [...linha(1).querySelectorAll("td")].map((c) => c.textContent);
@@ -179,6 +205,7 @@ describe("TabelaQuestoes", () => {
   it("questão desconsiderada ou anulada não mostra percentuais e tem o motivo no lugar do gabarito", async () => {
     simularApi({ "/enade/ec/questoes": tabela() });
     render(<TabelaQuestoes chave="ec" anos={[2023]} />);
+    await abrirAno(2023);
     await screen.findByText("Tema da questão 10");
 
     expect([...linha(17).querySelectorAll("td")].map((c) => c.textContent)).toEqual([
@@ -203,6 +230,7 @@ describe("TabelaQuestoes", () => {
   it("explica o que significam % de acertos, desconsiderada e anulada, e cita a fonte", async () => {
     simularApi({ "/enade/ec/questoes": tabela() });
     const { container } = render(<TabelaQuestoes chave="ec" anos={[2023]} />);
+    await abrirAno(2023);
     await screen.findByText("Tema da questão 10");
 
     expect(container).toHaveTextContent(
@@ -212,23 +240,68 @@ describe("TabelaQuestoes", () => {
     expect(container).toHaveTextContent("Fonte: INEP — fonte de teste.");
   });
 
-  it("com mais de um ano, mostra os botões e troca a tabela ao escolher outro ano", async () => {
+  it("sempre mostra os botões de ano, e a tabela só aparece depois de clicar", async () => {
+    const fetchFalso = simularApi({ "/enade/ec/questoes": tabela() });
+    render(<TabelaQuestoes chave="ec" anos={[2023, 2019]} />);
+
+    expect(screen.getByRole("button", { name: "2023" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "2019" })).toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    expect(fetchFalso).not.toHaveBeenCalled();
+  });
+
+  it("com um ano só, o botão do ano também aparece e a tabela espera o clique", async () => {
+    simularApi({ "/enade/ec/questoes": tabela() });
+    render(<TabelaQuestoes chave="ec" anos={[2023]} />);
+
+    expect(screen.getByRole("button", { name: "2023" })).toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
+
+  it("clicar em outro ano troca a tabela, e clicar de novo no mesmo ano esconde", async () => {
     const usuario = userEvent.setup();
     const fetchFalso = simularApi({ "/enade/ec/questoes": tabela() });
     render(<TabelaQuestoes chave="ec" anos={[2023, 2019]} />);
+
+    await usuario.click(screen.getByRole("button", { name: "2023" }));
     await screen.findByText("Tema da questão 10");
+    expect(fetchFalso).toHaveBeenCalledWith(`${API_URL}/enade/ec/questoes?ano=2023`);
 
     await usuario.click(screen.getByRole("button", { name: "2019" }));
-
     expect(fetchFalso).toHaveBeenCalledWith(`${API_URL}/enade/ec/questoes?ano=2019`);
+
+    await usuario.click(screen.getByRole("button", { name: "2019" }));
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Acertos por questão — Enade/)).not.toBeInTheDocument();
   });
 
-  it("com um ano só, não mostra botões de ano", async () => {
-    simularApi({ "/enade/ec/questoes": tabela() });
-    render(<TabelaQuestoes chave="ec" anos={[2023]} />);
-    await screen.findByText("Tema da questão 10");
+  it("ao trocar de ano, a tabela anterior fica na tela até a nova chegar", async () => {
+    const usuario = userEvent.setup();
+    const pendentes = {};
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((url) => {
+        const ano = String(url).match(/\?ano=(\d+)/)[1];
+        return new Promise((resolve) => {
+          pendentes[ano] = () =>
+            resolve({ ok: true, json: () => Promise.resolve(tabela(Number(ano))) });
+        });
+      }),
+    );
+    render(<TabelaQuestoes chave="ec" anos={[2023, 2019]} />);
 
-    expect(screen.queryByRole("button", { name: "2023" })).not.toBeInTheDocument();
+    await usuario.click(screen.getByRole("button", { name: "2023" }));
+    pendentes["2023"]();
+    await screen.findByText("Acertos por questão — Enade 2023");
+
+    await usuario.click(screen.getByRole("button", { name: "2019" }));
+    expect(screen.getByText("Acertos por questão — Enade 2023")).toBeInTheDocument(); // não some
+    expect(document.querySelector(".carregando")).not.toBeNull();
+
+    pendentes["2019"]();
+    await screen.findByText("Acertos por questão — Enade 2019");
+    expect(screen.queryByText("Acertos por questão — Enade 2023")).not.toBeInTheDocument();
+    expect(document.querySelector(".carregando")).toBeNull();
   });
 
   it("sem nenhum ano disponível, avisa e não busca nada", () => {
@@ -242,6 +315,7 @@ describe("TabelaQuestoes", () => {
   it("avisa quando a tabela não carrega", async () => {
     simularApi({});
     render(<TabelaQuestoes chave="ec" anos={[2023]} />);
+    await abrirAno(2023);
 
     expect(
       await screen.findByText("Não foi possível carregar a tabela de questões."),

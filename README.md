@@ -48,7 +48,10 @@ linha tracejada marcando os 60% exigidos para o certificado. Os dados vêm de ex
 ### Edições
 O que o Enade cobrou em cada edição (2014 em diante): quantas questões por disciplina e quais
 assuntos, para direcionar os estudos, e a tabela de **acertos por questão** do Relatório de Curso do
-INEP, com a disciplina e o tema de cada uma. Os dois ficam em subtópicos clicáveis; cada disciplina
+INEP, com a disciplina e o tema de cada uma, além de duas análises feitas
+a partir dessas tabelas: a **evolução de cada área** ao longo das edições (UFOP comparada com o
+Brasil na mesma edição) e as **áreas e temas com mais acertos e mais erros** em cada edição, para
+Formação Geral e Componente Específico. Cada uma é um subtópico clicável; cada disciplina
 abre e fecha para não sobrecarregar a leitura.
 
 <img src="docs/screenshots/04-edicoes.png" alt="Disciplinas e assuntos do Enade 2023 de Engenharia de Computação" width="860">
@@ -79,7 +82,7 @@ Todas as telas foram pensadas para telas pequenas, com menu recolhido e gráfico
 - **Gráficos feitos à mão, sem biblioteca.** As barras, as colunas e a linha dos 60% são React e CSS
   puros. A linha tracejada é um único elemento posicionado por variáveis CSS, que atravessa todas as
   barras e se adapta ao layout de computador e de celular.
-- **Testes automatizados:** 78 testes no front (Vitest + Testing Library) e 134 na API. Cobrem os
+- **Testes automatizados:** 100 testes no front (Vitest + Testing Library) e 237 na API. Cobrem os
   dados exibidos, a troca de curso, os links, os estados de erro e a integridade dos números copiados
   dos relatórios do INEP.
 - **Integração contínua** no GitHub Actions (lint, testes, build e auditoria de segurança) e
@@ -183,6 +186,7 @@ src/
 ├── api.js                 endereço da API (VITE_API_URL)
 ├── App.jsx                rotas
 ├── components/
+│   ├── DesempenhoPorArea.jsx  evolução por área e rankings de acertos e erros
 │   ├── Layout.jsx         cabeçalho, menu e rodapé
 │   └── Topico.jsx         seção que abre e fecha
 ├── data/avaliaufop.js     cursos, módulos e links do Moodle

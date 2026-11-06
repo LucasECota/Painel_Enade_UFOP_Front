@@ -2,6 +2,8 @@ import { Fragment, useState, useEffect } from "react";
 import { cursos as cursosAvaliaUfop } from "../data/avaliaufop";
 import { API_URL } from "../api";
 import TabelaQuestoes from "../components/TabelaQuestoes";
+import DesempenhoPorArea from "../components/DesempenhoPorArea";
+import { carregarDesempenho } from "../desempenhoCache";
 
 // true quando a tela é de celular (mesmo limite do CSS: 760px)
 function useEhCelular() {
@@ -21,6 +23,8 @@ function useEhCelular() {
 const SUBTOPICOS = [
   { chave: "assuntos", titulo: "Assuntos por disciplina" },
   { chave: "questoes", titulo: "Acertos por questão" },
+  { chave: "evolucao", titulo: "Evolução por área" },
+  { chave: "rankings", titulo: "Mais acertos e erros" },
 ];
 
 // Lista os assuntos de uma disciplina. Quando ela tem questão discursiva, separa as discursivas
@@ -52,6 +56,14 @@ function AssuntosDaDisciplina({ disciplina }) {
       )}
     </>
   );
+}
+
+// "10 (8 objetivas e 2 discursivas)": quando a API não informa as discursivas, mostra só o total
+function quantasQuestoes(total, discursivas) {
+  if (typeof discursivas !== "number") return `${total}`;
+  const objetivas = total - discursivas;
+  const plural = (n, singular, pluralTexto) => `${n} ${n === 1 ? singular : pluralTexto}`;
+  return `${total} (${plural(objetivas, "objetiva", "objetivas")} e ${plural(discursivas, "discursiva", "discursivas")})`;
 }
 
 // Disciplinas de um componente da prova, da que tem mais questões para a que tem menos.
@@ -95,6 +107,7 @@ function Edicoes() {
   const [cursos, setCursos] = useState([]);
   const [cursoSelecionado, setCursoSelecionado] = useState(null);
   const [anoSelecionado, setAnoSelecionado] = useState(null);
+  // { ano, ...dados }: guarda o ano a que os dados pertencem, para o título nunca ficar com o ano errado
   const [dadosDoCurso, setDadosDoCurso] = useState(null);
   // o que mostrar dentro do curso: os assuntos por disciplina ou a tabela de acertos por questão
   const [visao, setVisao] = useState("assuntos");
@@ -110,9 +123,18 @@ function Edicoes() {
   useEffect(() => {
     if (!cursoSelecionado || !anoSelecionado) return;
 
+    // Se o leitor clicar em outro ano antes da resposta chegar, a resposta antiga é ignorada
+    let cancelado = false;
+
     fetch(`${API_URL}/enade/${cursoSelecionado}?ano=${anoSelecionado}`)
       .then((response) => response.json())
-      .then((dados) => setDadosDoCurso(dados));
+      .then((dados) => {
+        if (!cancelado) setDadosDoCurso({ ano: anoSelecionado, ...dados });
+      });
+
+    return () => {
+      cancelado = true;
+    };
   }, [cursoSelecionado, anoSelecionado]);
 
   // Troca de curso: já limpa o ano e os dados antigos no mesmo clique,
@@ -120,9 +142,27 @@ function Edicoes() {
   // um ano que não existe para o novo curso).
   // Clicar de novo no curso que já está aberto fecha as opções.
   function selecionarCurso(chave) {
+    // já busca o desempenho por área em segundo plano: quando o leitor abrir esses subtópicos,
+    // os dados estarão prontos e a tela não pisca
+    const escolhido = cursos.find((c) => c.chave === chave);
+    if (chave !== cursoSelecionado && (escolhido?.anosComQuestoes ?? []).length > 0) {
+      carregarDesempenho(chave).catch(() => {}); // se falhar, o subtópico mostra o aviso ao abrir
+    }
     setCursoSelecionado(chave === cursoSelecionado ? null : chave);
     setAnoSelecionado(null);
     setDadosDoCurso(null);
+  }
+
+  // Clicar num ano mostra o conteúdo dele; clicar de novo no mesmo ano esconde.
+  // Ao trocar de ano, o conteúdo anterior fica na tela até o novo chegar (apagar antes fazia a
+  // página encolher e crescer de novo, e isso aparecia como uma piscada).
+  function escolherAno(ano) {
+    if (ano === anoSelecionado) {
+      setAnoSelecionado(null);
+      setDadosDoCurso(null);
+    } else {
+      setAnoSelecionado(ano);
+    }
   }
 
   // Só os cursos do AvaliaUFOP, na mesma ordem da página do AvaliaUFOP
@@ -147,7 +187,7 @@ function Edicoes() {
             <button
               key={ano}
               className={ano === anoSelecionado ? "btn btn-selecionado" : "btn"}
-              onClick={() => setAnoSelecionado(ano)}
+              onClick={() => escolherAno(ano)}
             >
               {ano}
             </button>
@@ -156,17 +196,31 @@ function Edicoes() {
       )}
 
       {dadosDoCurso && (
-        <div>
-          <p>Total de questões: {dadosDoCurso.totalQuestoes}</p>
-          <p>Formação Geral: {dadosDoCurso.fg.total}</p>
-          <p>Componente Específico: {dadosDoCurso.ce.total}</p>
+        <div className={dadosDoCurso.ano === anoSelecionado ? undefined : "carregando"}>
+          <p>
+            Total de questões:{" "}
+            {quantasQuestoes(
+              dadosDoCurso.totalQuestoes,
+              typeof dadosDoCurso.fg.discursivas === "number" &&
+                typeof dadosDoCurso.ce.discursivas === "number"
+                ? dadosDoCurso.fg.discursivas + dadosDoCurso.ce.discursivas
+                : undefined,
+            )}
+          </p>
+          <p>
+            Formação Geral: {quantasQuestoes(dadosDoCurso.fg.total, dadosDoCurso.fg.discursivas)}
+          </p>
+          <p>
+            Componente Específico:{" "}
+            {quantasQuestoes(dadosDoCurso.ce.total, dadosDoCurso.ce.discursivas)}
+          </p>
 
           <ListaDeDisciplinas
-            titulo={`Disciplinas (Formação Geral) — ${anoSelecionado}`}
+            titulo={`Disciplinas (Formação Geral) — ${dadosDoCurso.ano}`}
             disciplinas={dadosDoCurso.fg.disciplinas}
           />
           <ListaDeDisciplinas
-            titulo={`Disciplinas (Componente Específico) — ${anoSelecionado}`}
+            titulo={`Disciplinas (Componente Específico) — ${dadosDoCurso.ano}`}
             disciplinas={dadosDoCurso.ce.disciplinas}
           />
         </div>
@@ -189,10 +243,17 @@ function Edicoes() {
         ))}
       </div>
 
-      {visao === "assuntos" ? (
-        visaoAssuntos
-      ) : (
+      {visao === "assuntos" && visaoAssuntos}
+      {visao === "questoes" && (
         <TabelaQuestoes key={curso.chave} chave={curso.chave} anos={curso.anosComQuestoes ?? []} />
+      )}
+      {(visao === "evolucao" || visao === "rankings") && (
+        <DesempenhoPorArea
+          key={`${curso.chave}-${visao}`}
+          chave={curso.chave}
+          anos={curso.anosComQuestoes ?? []}
+          parte={visao}
+        />
       )}
     </>
   );
