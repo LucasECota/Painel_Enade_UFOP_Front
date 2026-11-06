@@ -887,9 +887,13 @@ tbody tr:nth-child(even) {
   display: flex;
   flex-direction: column;
   align-items: stretch; /* os selos ficam do mesmo tamanho... */
-  flex: 0 0 6.5rem; /* ...em todas as caixas */
+  flex: 0 0 5.8rem; /* ...em todas as caixas */
   gap: 4px;
   text-align: center;
+}
+
+.disciplina-info .tag {
+  padding: 2px 4px;
 }
 
 .disciplina-info small {
