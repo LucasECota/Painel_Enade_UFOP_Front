@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { API_URL } from "../api";
-import Topico from "./Topico";
 
 const formatar = (v) =>
   v === null || v === undefined
@@ -31,7 +30,8 @@ function TabelaDoComponente({ componente, completa }) {
   const colunasAcerto = COLUNAS_ACERTO.filter((c) => completa || c.sempre);
 
   return (
-    <Topico titulo={componente.titulo}>
+    <>
+      <h3 className="tabela-titulo">{componente.titulo}</h3>
       <p className="dica-rolagem">Deslize a tabela para o lado para ver todas as colunas.</p>
       <div className="tabela-rolavel">
         <table className="tabela-questoes">
@@ -92,7 +92,7 @@ function TabelaDoComponente({ componente, completa }) {
           </tbody>
         </table>
       </div>
-    </Topico>
+    </>
   );
 }
 
