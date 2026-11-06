@@ -829,6 +829,40 @@ tbody tr:nth-child(even) {
 }
 
 /* ===== Disciplinas (Edições) ===== */
+/* cada componente da prova abre e fecha pela seta do título */
+.componente > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.componente > summary::-webkit-details-marker {
+  display: none;
+}
+
+.componente > summary h2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.componente > summary h2::after {
+  content: "";
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-right: 3px solid var(--vinho);
+  border-bottom: 3px solid var(--vinho);
+  transform: rotate(45deg);
+  margin: -4px 8px 0 0;
+  transition: transform 0.2s ease;
+}
+
+.componente[open] > summary h2::after {
+  transform: rotate(-135deg);
+  margin-top: 4px;
+}
+
 .disciplinas {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));

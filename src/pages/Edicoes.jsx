@@ -61,8 +61,11 @@ function ListaDeDisciplinas({ titulo, disciplinas }) {
   if (comAssuntos.length === 0) return null;
 
   return (
-    <>
-      <h2>{titulo}</h2>
+    // a seção inteira abre e fecha pela seta do título
+    <details className="componente" open>
+      <summary>
+        <h2>{titulo}</h2>
+      </summary>
       <div className="disciplinas">
         {comAssuntos
           .slice()
@@ -87,7 +90,7 @@ function ListaDeDisciplinas({ titulo, disciplinas }) {
             </details>
           ))}
       </div>
-    </>
+    </details>
   );
 }
 
