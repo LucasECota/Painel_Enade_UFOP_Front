@@ -62,8 +62,8 @@ describe("TabelaQuestoes", () => {
     simularApi({ "/enade/ec/questoes": tabela() });
     render(<TabelaQuestoes chave="ec" anos={[2023]} />);
 
-    expect(await screen.findByRole("heading", { name: "Formação Geral" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Componente Específico" })).toBeInTheDocument();
+    expect(await screen.findByText("Formação Geral", { selector: "summary" })).toBeInTheDocument();
+    expect(screen.getByText("Componente Específico", { selector: "summary" })).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "Acertos por questão — Enade 2023" }),
     ).toBeInTheDocument();

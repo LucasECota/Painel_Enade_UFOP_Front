@@ -162,7 +162,9 @@ describe("Edições", () => {
     await usuario.click(screen.getByRole("button", { name: "2023" }));
     await screen.findByText("Sociologia");
 
-    const titulos = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
+    const titulos = [...document.querySelectorAll("details.topico > summary")].map(
+      (e) => e.textContent,
+    );
     expect(titulos).toEqual([
       "Disciplinas (Formação Geral) — 2023",
       "Disciplinas (Componente Específico) — 2023",
@@ -190,11 +192,11 @@ describe("Edições", () => {
     await usuario.click(screen.getByRole("button", { name: "2023" }));
     await screen.findByText("Sociologia");
 
-    const secoes = document.querySelectorAll("details.componente");
+    const secoes = document.querySelectorAll("details.topico");
     expect(secoes).toHaveLength(2);
     expect([...secoes].every((d) => d.open)).toBe(true);
 
-    await usuario.click(screen.getByRole("heading", { name: /Formação Geral/ }));
+    await usuario.click(screen.getByText(/Disciplinas \(Formação Geral\)/));
     expect(secoes[0].open).toBe(false);
     expect(secoes[1].open).toBe(true);
   });

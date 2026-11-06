@@ -2,6 +2,7 @@ import { Fragment, useState, useEffect } from "react";
 import { cursos as cursosAvaliaUfop } from "../data/avaliaufop";
 import { API_URL } from "../api";
 import TabelaQuestoes from "../components/TabelaQuestoes";
+import Topico from "../components/Topico";
 
 // true quando a tela é de celular (mesmo limite do CSS: 760px)
 function useEhCelular() {
@@ -61,11 +62,8 @@ function ListaDeDisciplinas({ titulo, disciplinas }) {
   if (comAssuntos.length === 0) return null;
 
   return (
-    // a seção inteira abre e fecha pela seta do título
-    <details className="componente" open>
-      <summary>
-        <h2>{titulo}</h2>
-      </summary>
+    // mesmo componente dos tópicos de Resultados: a seção abre e fecha pela seta do título
+    <Topico titulo={titulo}>
       <div className="disciplinas">
         {comAssuntos
           .slice()
@@ -90,7 +88,7 @@ function ListaDeDisciplinas({ titulo, disciplinas }) {
             </details>
           ))}
       </div>
-    </details>
+    </Topico>
   );
 }
 
