@@ -65,8 +65,32 @@ const relatorios = [
   },
 ];
 
+const relatoriosDeCurso = [
+  {
+    curso: "ec",
+    ano: 2023,
+    titulo: "Enade 2023 — Relatório do curso de Engenharia de Computação",
+    descricao: "UFOP, campus João Monlevade",
+    tamanhoMb: 1.5,
+    arquivo: "enade-2023-engenharia-de-computacao-relatorio-de-curso.pdf",
+  },
+  {
+    curso: "ec",
+    ano: 2017,
+    titulo: "Enade 2017 — Relatório do curso de Engenharia de Computação",
+    descricao: "UFOP, campus João Monlevade",
+    tamanhoMb: 1.1,
+    arquivo: "enade-2017-engenharia-de-computacao-relatorio-de-curso.pdf",
+  },
+];
+
 async function renderizar() {
-  simularApi({ "/resultados": resultados, "/relatorios": relatorios });
+  // "/relatorios/curso" vem antes porque a simulação usa a primeira rota que combina com o endereço
+  simularApi({
+    "/resultados": resultados,
+    "/relatorios/curso": relatoriosDeCurso,
+    "/relatorios": relatorios,
+  });
   const resultado = render(<Resultados />);
   await screen.findByText("Conceito Enade em cada edição");
   return resultado;
@@ -82,13 +106,27 @@ describe("Resultados", () => {
     expect(screen.getByRole("button", { name: "Sistemas de Informação" })).toBeInTheDocument();
   });
 
-  it("mostra os quatro tópicos; só os Relatórios começam fechados", async () => {
+  it("mostra os quatro tópicos, todos fechados até o leitor clicar", async () => {
     await renderizar();
 
+    for (const titulo of [
+      "Conceito Enade em cada edição",
+      "Comparação com o Brasil — Enade 2023",
+      "Perfil dos concluintes — Enade 2023",
+      "Relatórios do INEP para baixar",
+    ]) {
+      expect(topico(titulo)).not.toHaveAttribute("open");
+    }
+  });
+
+  it("clicar no título abre o tópico", async () => {
+    const usuario = userEvent.setup();
+    await renderizar();
+
+    await usuario.click(screen.getByText("Conceito Enade em cada edição"));
+
     expect(topico("Conceito Enade em cada edição")).toHaveAttribute("open");
-    expect(topico("Comparação com o Brasil — Enade 2023")).toHaveAttribute("open");
-    expect(topico("Perfil dos concluintes — Enade 2023")).toHaveAttribute("open");
-    expect(topico("Relatórios do INEP para baixar")).not.toHaveAttribute("open");
+    expect(topico("Comparação com o Brasil — Enade 2023")).not.toHaveAttribute("open");
   });
 
   describe("conceito Enade", () => {
@@ -159,19 +197,20 @@ describe("Resultados", () => {
     });
   });
 
-  it("trocar de curso atualiza todos os blocos e mantém o estado dos tópicos", async () => {
+  it("trocar de curso atualiza todos os blocos e mantém aberto o tópico que o leitor abriu", async () => {
     const usuario = userEvent.setup();
     await renderizar();
 
-    await usuario.click(screen.getByText("Conceito Enade em cada edição")); // fecha o tópico
+    await usuario.click(screen.getByText("Conceito Enade em cada edição")); // abre o tópico
     await usuario.click(screen.getByRole("button", { name: "Sistemas de Informação" }));
 
     // títulos acompanham o ano dos dados do curso novo (2021 para Sistemas)
     expect(screen.getByText("Comparação com o Brasil — Enade 2021")).toBeInTheDocument();
     expect(screen.getByText("Perfil dos concluintes — Enade 2021")).toBeInTheDocument();
     expect(within(topico("Conceito Enade em cada edição")).getByText("2021")).toBeInTheDocument();
-    // o tópico continua fechado, como o usuário deixou
-    expect(topico("Conceito Enade em cada edição")).not.toHaveAttribute("open");
+    // o tópico continua aberto, como o usuário deixou, e os outros continuam fechados
+    expect(topico("Conceito Enade em cada edição")).toHaveAttribute("open");
+    expect(topico("Perfil dos concluintes — Enade 2021")).not.toHaveAttribute("open");
   });
 
   describe("relatórios do INEP", () => {
@@ -185,12 +224,65 @@ describe("Resultados", () => {
     it("cada relatório tem um link de download para o ano certo", async () => {
       await renderizar();
       const secao = within(topico("Relatórios do INEP para baixar"));
-      const links = secao.getAllByRole("link", { name: "Baixar PDF" });
+      const links = within(secao.getByRole("list", { name: "Relatórios da IES" })).getAllByRole(
+        "link",
+        { name: "Baixar PDF" },
+      );
 
       expect(links.map((l) => l.getAttribute("href"))).toEqual([
         `${API_URL}/relatorios/2023/download`,
         `${API_URL}/relatorios/2019/download`,
       ]);
+    });
+
+    it("Engenharia de Computação não mostra os relatórios de curso, mesmo que a API os envie", async () => {
+      await renderizar();
+      const secao = within(topico("Relatórios do INEP para baixar"));
+
+      expect(secao.queryByRole("heading", { name: /Relatórios de curso/ })).not.toBeInTheDocument();
+      expect(secao.queryByRole("list", { name: "Relatórios de curso" })).not.toBeInTheDocument();
+      // os relatórios de IES continuam
+      expect(secao.getByRole("list", { name: "Relatórios da IES" })).toBeInTheDocument();
+    });
+
+    it("os outros cursos mostram os seus relatórios de curso, com link para o curso e o ano certos", async () => {
+      const usuario = userEvent.setup();
+      simularApi({
+        "/resultados": resultados,
+        "/relatorios/curso": [
+          ...relatoriosDeCurso,
+          {
+            curso: "si",
+            ano: 2021,
+            titulo: "Enade 2021 — Relatório do curso de Sistemas de Informação",
+            descricao: "UFOP, campus João Monlevade",
+            tamanhoMb: 2.5,
+            arquivo: "enade-2021-sistemas-de-informacao-relatorio-de-curso.pdf",
+          },
+        ],
+        "/relatorios": relatorios,
+      });
+      render(<Resultados />);
+      await screen.findByText("Conceito Enade em cada edição");
+
+      await usuario.click(screen.getByRole("button", { name: "Sistemas de Informação" }));
+      const secao = within(topico("Relatórios do INEP para baixar"));
+      const links = within(secao.getByRole("list", { name: "Relatórios de curso" })).getAllByRole(
+        "link",
+        { name: "Baixar PDF" },
+      );
+
+      expect(links.map((l) => l.getAttribute("href"))).toEqual([
+        `${API_URL}/relatorios/curso/si/2021/download`,
+      ]);
+    });
+
+    it("avisa quando um curso que mostra relatórios de curso não tem nenhum", async () => {
+      const usuario = userEvent.setup();
+      await renderizar();
+
+      await usuario.click(screen.getByRole("button", { name: "Sistemas de Informação" }));
+      expect(screen.getByText("Nenhum relatório disponível.")).toBeInTheDocument();
     });
 
     it("mostra o tamanho do arquivo com vírgula", async () => {

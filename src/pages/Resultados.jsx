@@ -41,9 +41,36 @@ function Barras({ curso, brasil, sufixo = "" }) {
   );
 }
 
+// Cursos cujos relatórios de curso não são oferecidos para baixar nesta página
+const CURSOS_SEM_RELATORIO_DE_CURSO = ["ec"];
+
+// Lista de relatórios com o botão de baixar; sem itens, avisa que não há relatório.
+function ListaDeRelatorios({ nome, itens }) {
+  if (itens.length === 0) return <p className="nota">Nenhum relatório disponível.</p>;
+
+  return (
+    <ul className="relatorios" aria-label={nome}>
+      {itens.map((r) => (
+        <li key={r.chave}>
+          <div>
+            <strong>{r.titulo}</strong>
+            <small>
+              {r.descricao} · PDF, {formatar(r.tamanhoMb)} MB
+            </small>
+          </div>
+          <a className="btn btn-link" href={r.href}>
+            Baixar PDF
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function Resultados() {
   const [dados, setDados] = useState(null);
   const [relatorios, setRelatorios] = useState([]);
+  const [relatoriosDeCurso, setRelatoriosDeCurso] = useState([]);
   const [erro, setErro] = useState(false);
   const [chave, setChave] = useState("ec");
 
@@ -51,10 +78,15 @@ function Resultados() {
     Promise.all([
       fetch(`${API_URL}/resultados`).then((r) => r.json()),
       fetch(`${API_URL}/relatorios`).then((r) => r.json()),
+      // os relatórios de curso são um extra: se falharem, o resto da página continua
+      fetch(`${API_URL}/relatorios/curso`)
+        .then((r) => r.json())
+        .catch(() => []),
     ])
-      .then(([resultados, lista]) => {
+      .then(([resultados, lista, listaDeCurso]) => {
         setDados(resultados);
         setRelatorios(lista);
+        setRelatoriosDeCurso(listaDeCurso);
       })
       .catch(() => setErro(true));
   }, []);
@@ -151,28 +183,43 @@ function Resultados() {
             </div>
           </Topico>
 
-          <Topico titulo="Relatórios do INEP para baixar" aberto={false}>
+          <Topico titulo="Relatórios do INEP para baixar">
             <p>
               Relatórios oficiais de cada edição do Enade (UFOP, campus João Monlevade). IES
-              significa Instituição de Educação Superior: cada relatório reúne os resultados de
-              todos os cursos avaliados da UFOP em João Monlevade.
+              significa Instituição de Educação Superior: o relatório da IES reúne os resultados de
+              todos os cursos avaliados da UFOP em João Monlevade, e o relatório de curso traz os
+              resultados de um curso só, com o percentual de acerto de cada questão.
             </p>
 
-            <ul className="relatorios">
-              {relatorios.map((r) => (
-                <li key={r.ano}>
-                  <div>
-                    <strong>{r.titulo}</strong>
-                    <small>
-                      {r.descricao} · PDF, {formatar(r.tamanhoMb)} MB
-                    </small>
-                  </div>
-                  <a className="btn btn-link" href={`${API_URL}/relatorios/${r.ano}/download`}>
-                    Baixar PDF
-                  </a>
-                </li>
-              ))}
-            </ul>
+            <h3>Relatórios da IES (todos os cursos)</h3>
+            <ListaDeRelatorios
+              nome="Relatórios da IES"
+              itens={relatorios.map((r) => ({
+                chave: r.ano,
+                titulo: r.titulo,
+                descricao: r.descricao,
+                tamanhoMb: r.tamanhoMb,
+                href: `${API_URL}/relatorios/${r.ano}/download`,
+              }))}
+            />
+
+            {!CURSOS_SEM_RELATORIO_DE_CURSO.includes(chave) && (
+              <>
+                <h3>Relatórios de curso — {curso.nome}</h3>
+                <ListaDeRelatorios
+                  nome="Relatórios de curso"
+                  itens={relatoriosDeCurso
+                    .filter((r) => r.curso === chave)
+                    .map((r) => ({
+                      chave: r.ano,
+                      titulo: r.titulo,
+                      descricao: r.descricao,
+                      tamanhoMb: r.tamanhoMb,
+                      href: `${API_URL}/relatorios/curso/${r.curso}/${r.ano}/download`,
+                    }))}
+                />
+              </>
+            )}
           </Topico>
 
           <p className="nota">

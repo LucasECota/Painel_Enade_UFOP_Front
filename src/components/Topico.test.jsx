@@ -3,30 +3,26 @@ import userEvent from "@testing-library/user-event";
 import Topico from "./Topico";
 
 describe("Topico", () => {
-  it("começa aberto por padrão e mostra o conteúdo", () => {
+  it("começa fechado por padrão", () => {
     render(<Topico titulo="Meu tópico">conteúdo</Topico>);
 
-    expect(screen.getByText("Meu tópico").closest("details")).toHaveAttribute("open");
-    expect(screen.getByText("conteúdo")).toBeVisible();
+    expect(screen.getByText("Meu tópico").closest("details")).not.toHaveAttribute("open");
   });
 
-  it("pode começar fechado", () => {
+  it("pode começar aberto", () => {
     render(
-      <Topico titulo="Fechado" aberto={false}>
+      <Topico titulo="Aberto" aberto>
         conteúdo
       </Topico>,
     );
 
-    expect(screen.getByText("Fechado").closest("details")).not.toHaveAttribute("open");
+    expect(screen.getByText("Aberto").closest("details")).toHaveAttribute("open");
+    expect(screen.getByText("conteúdo")).toBeVisible();
   });
 
   it("abre e fecha ao clicar no título", async () => {
     const usuario = userEvent.setup();
-    render(
-      <Topico titulo="Alternar" aberto={false}>
-        conteúdo
-      </Topico>,
-    );
+    render(<Topico titulo="Alternar">conteúdo</Topico>);
     const detalhes = screen.getByText("Alternar").closest("details");
 
     await usuario.click(screen.getByText("Alternar"));
