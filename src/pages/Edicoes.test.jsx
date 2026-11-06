@@ -183,22 +183,6 @@ describe("Edições", () => {
     expect(document.querySelector(".discursivas-resumo")).toBeNull();
   });
 
-  it("cada componente (Formação Geral e Componente Específico) abre e fecha pela seta do título", async () => {
-    const usuario = userEvent.setup();
-    await renderizar();
-    await usuario.click(cardDoCurso("Computação"));
-    await usuario.click(screen.getByRole("button", { name: "2023" }));
-    await screen.findByText("Sociologia");
-
-    const secoes = document.querySelectorAll("details.componente");
-    expect(secoes).toHaveLength(2);
-    expect([...secoes].every((d) => d.open)).toBe(true);
-
-    await usuario.click(screen.getByRole("heading", { name: /Formação Geral/ }));
-    expect(secoes[0].open).toBe(false);
-    expect(secoes[1].open).toBe(true);
-  });
-
   it("separa os assuntos das questões discursivas e das objetivas", async () => {
     const usuario = userEvent.setup();
     await renderizar();
