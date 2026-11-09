@@ -6,10 +6,8 @@ import simboloIcea from "../assets/simbolo-icea.png";
 
 const links = [
   { to: "/", label: "Início" },
-  { to: "/avaliaufop", label: "AvaliaUFOP" },
-  { to: "/desempenho", label: "Desempenho" },
-  { to: "/edicoes", label: "Edições" },
-  { to: "/resultados", label: "Resultados" },
+  { to: "/preparatorio", label: "Preparatório Enade 2026" },
+  { to: "/dados", label: "Dados Edições Anteriores" },
 ];
 
 // calculado uma vez, fora do componente (chamar Date durante a renderização não é recomendado)

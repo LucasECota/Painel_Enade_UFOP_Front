@@ -3,26 +3,16 @@ import { info } from "../data/avaliaufop";
 
 const atalhos = [
   {
-    to: "/avaliaufop",
-    titulo: "AvaliaUFOP — Preparação Enade 2026",
+    to: "/preparatorio",
+    titulo: "Preparatório Enade 2026",
     texto:
-      "Cursos de preparação para Eng. de Computação, Eng. de Produção e Sistemas de Informação.",
+      "Cursos de preparação do AvaliaUFOP para Eng. de Computação, Eng. de Produção e Sistemas de Informação, e o desempenho dos alunos.",
   },
   {
-    to: "/desempenho",
-    titulo: "Desempenho geral",
-    texto: "Acompanhe inscritos, concluintes e aproveitamento dos alunos em cada curso.",
-  },
-  {
-    to: "/edicoes",
-    titulo: "Edições do Enade",
-    texto: "Consulte as disciplinas, os assuntos e os acertos por questão do Enade, por curso.",
-  },
-  {
-    to: "/resultados",
-    titulo: "Resultados do Enade",
+    to: "/dados",
+    titulo: "Dados Edições Anteriores",
     texto:
-      "Conceito dos cursos do ICEA em cada edição, comparação com o Brasil e relatórios do INEP.",
+      "O que o Enade cobrou por disciplina, como a UFOP foi em cada questão, o Conceito Enade e os relatórios do INEP.",
   },
 ];
 
@@ -30,10 +20,10 @@ function Home() {
   return (
     <div>
       <section className="hero">
-        <h1>Painel Enade</h1>
+        <h1>Painel Enade – AvaliaUFOP</h1>
         <p>
-          Este painel reúne dados das edições do Enade, os cursos de preparação do AvaliaUFOP e o
-          desempenho dos alunos do Instituto de Ciências Exatas e Aplicadas da UFOP.
+          Este painel reúne dados das edições anteriores do Enade, os cursos de preparação para o
+          Enade 2026 e o desempenho dos alunos do Instituto de Ciências Exatas e Aplicadas da UFOP.
         </p>
         <p className="autoria">
           <strong>Autor:</strong> {info.autor} · <strong>Orientador:</strong> prof.{" "}

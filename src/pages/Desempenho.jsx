@@ -35,7 +35,7 @@ function Desempenho() {
 
   return (
     <div>
-      <h1>Desempenho geral dos alunos</h1>
+      <h2>Desempenho geral dos alunos</h2>
       <p>
         Acompanhe o desempenho dos alunos no AvaliaUFOP, com o número de inscritos e concluintes e o
         aproveitamento médio em cada atividade.

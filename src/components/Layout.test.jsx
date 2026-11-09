@@ -9,7 +9,7 @@ function renderizar(rota = "/") {
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<p>página inicial</p>} />
-          <Route path="/desempenho" element={<p>página de desempenho</p>} />
+          <Route path="/dados" element={<p>página de dados</p>} />
         </Route>
       </Routes>
     </MemoryRouter>,
@@ -23,10 +23,8 @@ describe("Layout", () => {
 
     expect(menu.getAllByRole("link").map((l) => l.textContent)).toEqual([
       "Início",
-      "AvaliaUFOP",
-      "Desempenho",
-      "Edições",
-      "Resultados",
+      "Preparatório Enade 2026",
+      "Dados Edições Anteriores",
     ]);
   });
 
@@ -38,14 +36,14 @@ describe("Layout", () => {
   });
 
   it("marca a página atual no menu", () => {
-    renderizar("/desempenho");
+    renderizar("/dados");
 
-    expect(screen.getByRole("link", { name: "Desempenho" })).toHaveClass("active");
+    expect(screen.getByRole("link", { name: "Dados Edições Anteriores" })).toHaveClass("active");
     expect(screen.getByRole("link", { name: "Início" })).not.toHaveClass("active");
   });
 
   it("o título 'Painel Enade' do cabeçalho leva para a página inicial", () => {
-    renderizar("/desempenho");
+    renderizar("/dados");
 
     expect(screen.getByRole("link", { name: /ir para a página inicial/i })).toHaveAttribute(
       "href",
@@ -62,7 +60,7 @@ describe("Layout", () => {
     await usuario.click(botao);
     expect(botao).toHaveAttribute("aria-expanded", "true");
 
-    await usuario.click(screen.getByRole("link", { name: "Desempenho" }));
+    await usuario.click(screen.getByRole("link", { name: "Dados Edições Anteriores" }));
     expect(botao).toHaveAttribute("aria-expanded", "false");
   });
 

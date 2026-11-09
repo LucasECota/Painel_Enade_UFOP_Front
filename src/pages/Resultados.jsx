@@ -111,7 +111,7 @@ function Resultados() {
 
   return (
     <div>
-      <h1>Resultados do Enade no ICEA</h1>
+      <h2>Resultados do Enade no ICEA</h2>
       <p>
         Veja como os cursos do ICEA foram nas últimas edições do Enade, comparados com a média do
         Brasil, e baixe os relatórios oficiais do INEP.

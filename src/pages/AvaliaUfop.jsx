@@ -4,9 +4,9 @@ function AvaliaUfop() {
   return (
     <div>
       <section className="hero">
-        <h1>
+        <h2>
           {info.titulo} — {info.edicao}
-        </h1>
+        </h2>
         <p>
           Curso de preparação para o Enade desenvolvido pelo Instituto de Ciências Exatas e
           Aplicadas (ICEA/UFOP), Campus João Monlevade, no âmbito do projeto Pró-Ativa. Simulados
