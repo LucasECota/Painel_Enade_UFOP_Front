@@ -8,36 +8,120 @@ const formatar = (v) =>
 
 const ALTERNATIVAS = ["A", "B", "C", "D", "E", "SI"];
 
-// colunas de "Percentual de acertos": as duas primeiras e a última aparecem sempre,
-// o resto só quando o leitor pede "todas as colunas"
+// Colunas de "% de acertos". "dica" é o texto que aparece ao passar o mouse sobre o nome da coluna.
+// As colunas "sempre" aparecem na tabela resumida; o resto só quando o leitor pede "todas as colunas".
+// O grupo do último item da tabela resumida é escolhido pelo leitor (Brasil, Estado, Região...).
 const COLUNAS_ACERTO = [
   {
     chave: "curso",
     titulo: "UFOP",
-    dica: "Concluintes deste curso na UFOP (João Monlevade)",
-    sempre: true,
+    opcao: "UFOP",
+    dica: "Percentual de concluintes deste curso na UFOP (João Monlevade) que acertaram a questão.",
   },
-  { chave: "uf", titulo: "Estado", dica: "Concluintes do mesmo curso no mesmo estado (UF)" },
-  { chave: "regiao", titulo: "Região", dica: "Concluintes da mesma região" },
-  { chave: "catAdm", titulo: "Cat. adm.", dica: "Mesma categoria administrativa" },
-  { chave: "orgAcad", titulo: "Org. acad.", dica: "Mesma organização acadêmica" },
+  {
+    chave: "uf",
+    titulo: "Estado",
+    opcao: "Estado (UF)",
+    dica: "Estado (UF): percentual de acertos dos concluintes do mesmo curso nas instituições do mesmo estado da UFOP (Minas Gerais).",
+  },
+  {
+    chave: "regiao",
+    titulo: "Região",
+    opcao: "Região",
+    dica: "Região: percentual de acertos dos concluintes do mesmo curso nas instituições da mesma Grande Região da UFOP (Sudeste).",
+  },
+  {
+    chave: "catAdm",
+    titulo: "Cat. adm.",
+    opcao: "Categoria administrativa",
+    dica: "Categoria administrativa: percentual de acertos dos concluintes do mesmo curso em instituições da mesma categoria da UFOP (pública federal).",
+  },
+  {
+    chave: "orgAcad",
+    titulo: "Org. acad.",
+    opcao: "Organização acadêmica",
+    dica: "Organização acadêmica: percentual de acertos dos concluintes do mesmo curso em instituições do mesmo tipo da UFOP (universidade, em vez de centro universitário ou faculdade).",
+  },
   {
     chave: "brasil",
     titulo: "Brasil",
-    dica: "Concluintes do mesmo curso em todo o Brasil",
-    sempre: true,
+    opcao: "Brasil",
+    dica: "Brasil: percentual de acertos dos concluintes do mesmo curso em todo o país.",
   },
 ];
 
-// Curso acima ou abaixo da média do Brasil: só uma cor discreta no número
-function classeDoCurso(acertos) {
-  if (acertos.curso > acertos.brasil) return "num curso-acima";
-  if (acertos.curso < acertos.brasil) return "num curso-abaixo";
+// Os grupos com que a UFOP pode ser comparada (tudo menos a própria UFOP)
+const GRUPOS_DE_COMPARACAO = COLUNAS_ACERTO.filter((c) => c.chave !== "curso");
+const grupo = (chave) => COLUNAS_ACERTO.find((c) => c.chave === chave);
+
+const DICA_ALTERNATIVA = (a) =>
+  a === "SI"
+    ? "SI: concluintes da UFOP que deixaram a questão sem resposta ou marcaram mais de uma alternativa."
+    : `Percentual de concluintes da UFOP que marcaram a alternativa ${a}.`;
+
+// UFOP acima ou abaixo do grupo escolhido: só uma cor discreta no número
+function classeDoCurso(acertos, comparar) {
+  const outro = acertos[comparar];
+  if (outro === null || outro === undefined) return "num";
+  if (acertos.curso > outro) return "num curso-acima";
+  if (acertos.curso < outro) return "num curso-abaixo";
   return "num";
 }
 
-function TabelaDoComponente({ componente, completa }) {
-  const colunasAcerto = COLUNAS_ACERTO.filter((c) => completa || c.sempre);
+// Ordena as questões por número ou pelo acerto da UFOP. Anuladas e desconsideradas (sem percentual)
+// ficam sempre no fim quando se ordena pelo acerto.
+function ordenar(questoes, { coluna, sentido }) {
+  const fator = sentido === "asc" ? 1 : -1;
+  return [...questoes].sort((x, y) => {
+    if (coluna === "numero") return (x.numero - y.numero) * fator;
+    const xv = x.situacao === "valida" ? x.acertos.curso : null;
+    const yv = y.situacao === "valida" ? y.acertos.curso : null;
+    if (xv === null && yv === null) return x.numero - y.numero;
+    if (xv === null) return 1;
+    if (yv === null) return -1;
+    return (xv - yv) * fator || x.numero - y.numero;
+  });
+}
+
+// Cabeçalho que ordena ao clicar (crescente, e de novo para decrescente)
+function BotaoOrdenar({ coluna, rotulo, dica, ordem, aoOrdenar }) {
+  const ativa = ordem.coluna === coluna;
+  const indicador = !ativa ? "⇅" : ordem.sentido === "asc" ? "▲" : "▼";
+  return (
+    <button
+      type="button"
+      className={ativa ? "ordenar ativa" : "ordenar"}
+      title={dica}
+      onClick={() => aoOrdenar(coluna)}
+    >
+      {rotulo} <span aria-hidden="true">{indicador}</span>
+    </button>
+  );
+}
+
+function SeletorDeComparacao({ comparar, aoComparar }) {
+  return (
+    <select
+      className="seletor-comparacao"
+      aria-label="Comparar a UFOP com"
+      title={grupo(comparar).dica}
+      value={comparar}
+      onChange={(e) => aoComparar(e.target.value)}
+    >
+      {GRUPOS_DE_COMPARACAO.map((g) => (
+        <option key={g.chave} value={g.chave}>
+          {g.opcao}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function TabelaDoComponente({ componente, completa, ordem, aoOrdenar, comparar, aoComparar }) {
+  // tabela resumida: a UFOP e o grupo escolhido; completa: todos os grupos
+  const colunasAcerto = completa ? COLUNAS_ACERTO : [COLUNAS_ACERTO[0], grupo(comparar)];
+  const sentidoAria = (coluna) =>
+    ordem.coluna === coluna ? (ordem.sentido === "asc" ? "ascending" : "descending") : "none";
 
   return (
     <>
@@ -47,32 +131,91 @@ function TabelaDoComponente({ componente, completa }) {
         <table className="tabela-questoes">
           <thead>
             <tr>
-              <th rowSpan={2}>Questão</th>
-              <th rowSpan={2}>Disciplina</th>
-              <th rowSpan={2}>Tema</th>
-              <th colSpan={colunasAcerto.length}>% de acertos</th>
-              <th rowSpan={2}>Gabarito</th>
-              {completa && <th colSpan={ALTERNATIVAS.length}>Respostas da UFOP (%)</th>}
+              <th
+                rowSpan={2}
+                aria-sort={sentidoAria("numero")}
+                title="Número da questão na prova. Clique para ordenar."
+              >
+                <BotaoOrdenar
+                  coluna="numero"
+                  rotulo="Questão"
+                  dica="Ordenar pelo número da questão"
+                  ordem={ordem}
+                  aoOrdenar={aoOrdenar}
+                />
+              </th>
+              <th
+                rowSpan={2}
+                title="Disciplina associada à questão (associação feita pelo projeto, a partir das provas)."
+              >
+                Disciplina
+              </th>
+              <th
+                rowSpan={2}
+                title="Tema da questão (associação feita pelo projeto, a partir das provas)."
+              >
+                Tema
+              </th>
+              <th
+                colSpan={colunasAcerto.length}
+                title="Percentual de concluintes que acertaram a questão."
+              >
+                % de acertos
+              </th>
+              <th
+                rowSpan={2}
+                title="Alternativa correta. Anulada: a comissão anulou a questão. Desconsiderada: o INEP deixou a questão fora do cálculo da nota."
+              >
+                Gabarito
+              </th>
+              {completa && (
+                <th
+                  colSpan={ALTERNATIVAS.length}
+                  title="Como os concluintes da UFOP responderam: percentual que marcou cada alternativa."
+                >
+                  Respostas da UFOP (%)
+                </th>
+              )}
             </tr>
             <tr>
-              {colunasAcerto.map((c) => (
-                <th key={c.chave} title={c.dica}>
-                  {c.titulo}
-                </th>
-              ))}
+              {colunasAcerto.map((c) => {
+                if (c.chave === "curso") {
+                  return (
+                    <th key={c.chave} aria-sort={sentidoAria("ufop")}>
+                      <BotaoOrdenar
+                        coluna="ufop"
+                        rotulo="UFOP"
+                        dica={`${c.dica} Clique para ordenar.`}
+                        ordem={ordem}
+                        aoOrdenar={aoOrdenar}
+                      />
+                    </th>
+                  );
+                }
+                // na tabela resumida, o grupo da comparação é escolhido aqui, no próprio cabeçalho
+                if (!completa) {
+                  return (
+                    <th key={c.chave} title={c.dica}>
+                      <SeletorDeComparacao comparar={comparar} aoComparar={aoComparar} />
+                    </th>
+                  );
+                }
+                return (
+                  <th key={c.chave} title={c.dica}>
+                    {c.titulo}
+                  </th>
+                );
+              })}
               {completa &&
                 ALTERNATIVAS.map((a) => (
-                  <th
-                    key={a}
-                    title={a === "SI" ? "Sem resposta ou mais de uma resposta" : undefined}
-                  >
+                  <th key={a} title={DICA_ALTERNATIVA(a)}>
                     {a}
                   </th>
                 ))}
             </tr>
           </thead>
           <tbody>
-            {componente.questoes.map((q) => {
+            {ordenar(componente.questoes, ordem).map((q) => {
               const valida = q.situacao === "valida";
               return (
                 <tr key={q.numero} className={valida ? undefined : "questao-fora"}>
@@ -82,7 +225,9 @@ function TabelaDoComponente({ componente, completa }) {
                   {colunasAcerto.map((c) => (
                     <td
                       key={c.chave}
-                      className={c.chave === "curso" && valida ? classeDoCurso(q.acertos) : "num"}
+                      className={
+                        c.chave === "curso" && valida ? classeDoCurso(q.acertos, comparar) : "num"
+                      }
                     >
                       {valida ? formatar(q.acertos[c.chave]) : "—"}
                     </td>
@@ -113,6 +258,17 @@ function TabelaQuestoes({ chave, anos }) {
   const [dados, setDados] = useState(null);
   const [erro, setErro] = useState(false);
   const [completa, setCompleta] = useState(false);
+  const [ordem, setOrdem] = useState({ coluna: "numero", sentido: "asc" });
+  const [comparar, setComparar] = useState("brasil"); // com quem a UFOP é comparada (cores e coluna)
+
+  // Clicar na coluna ordena de forma crescente; clicar de novo inverte
+  function ordenarPor(coluna) {
+    setOrdem((atual) =>
+      atual.coluna === coluna
+        ? { coluna, sentido: atual.sentido === "asc" ? "desc" : "asc" }
+        : { coluna, sentido: "asc" },
+    );
+  }
 
   // Clicar num ano mostra a tabela dele; clicar de novo no mesmo ano esconde.
   // Ao trocar de ano, a tabela anterior fica na tela até a nova chegar (apagar antes fazia a
@@ -190,6 +346,14 @@ function TabelaQuestoes({ chave, anos }) {
             <button className="btn btn-claro" onClick={() => setCompleta((v) => !v)}>
               {completa ? "Ver menos colunas" : "Ver todas as colunas"}
             </button>
+            {completa && (
+              // na tabela completa todos os grupos aparecem como colunas; aqui se escolhe com qual deles
+              // o número da UFOP é comparado (a cor verde ou vinho)
+              <label className="comparar-cores">
+                Cor do número da UFOP, comparando com:{" "}
+                <SeletorDeComparacao comparar={comparar} aoComparar={setComparar} />
+              </label>
+            )}
             <a
               className="btn btn-link"
               href={`${API_URL}/relatorios/curso/${chave}/${dados.ano}/download`}
@@ -199,7 +363,15 @@ function TabelaQuestoes({ chave, anos }) {
           </div>
 
           {dados.componentes.map((componente) => (
-            <TabelaDoComponente key={componente.tipo} componente={componente} completa={completa} />
+            <TabelaDoComponente
+              key={componente.tipo}
+              componente={componente}
+              completa={completa}
+              ordem={ordem}
+              aoOrdenar={ordenarPor}
+              comparar={comparar}
+              aoComparar={setComparar}
+            />
           ))}
 
           <p className="nota">

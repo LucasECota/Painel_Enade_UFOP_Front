@@ -49,8 +49,8 @@ const dados = {
 };
 
 const TITULOS = {
-  evolucao: "Desempenho de cada área ao longo das edições",
-  rankings: "Áreas e temas com mais acertos e mais erros",
+  evolucao: "Desempenho de cada disciplina ao longo das edições",
+  rankings: "Disciplinas e temas com mais acertos e mais erros",
 };
 
 // cada parte é uma subpágina: renderiza só a que foi pedida
@@ -60,8 +60,6 @@ async function renderizar(parte) {
   await screen.findByText(TITULOS[parte]);
   return resultado;
 }
-
-const evolucao = () => within(screen.getByRole("table"));
 
 describe("DesempenhoPorArea", () => {
   beforeEach(() => limparCacheDoDesempenho()); // cada teste começa sem dados guardados
@@ -91,89 +89,162 @@ describe("DesempenhoPorArea", () => {
     expect(fetchFalso).not.toHaveBeenCalled();
   });
 
-  describe("evolução por área", () => {
-    it("tem uma coluna por edição, da mais antiga para a mais recente", async () => {
-      await renderizar("evolucao");
-      const tabela = screen.getAllByRole("table")[0];
-      const colunas = within(tabela)
-        .getAllByRole("columnheader")
-        .map((c) => c.textContent);
+  describe("gráfico de evolução por disciplina", () => {
+    const textos = () =>
+      [...document.querySelectorAll(".grafico-svg text")].map((t) => t.textContent);
 
-      expect(colunas).toEqual(["Área", "2017", "2023"]);
+    it("começa pela disciplina que apareceu em mais edições, com UFOP e Brasil em cada edição", async () => {
+      await renderizar("evolucao");
+      expect(screen.getByRole("combobox", { name: "Disciplina" })).toHaveValue(
+        "Redes de Computadores I",
+      );
+      expect(screen.getByRole("img", { name: /Redes de Computadores I/ })).toBeInTheDocument();
+      expect(textos()).toEqual(
+        expect.arrayContaining(["2017", "2023", "45,0", "55,0", "60,0", "50,0"]),
+      );
+      expect(textos()).toEqual(expect.arrayContaining(["▼ 10,0 p.p.", "▲ 10,0 p.p."]));
+      expect(document.querySelectorAll(".grafico-barra-ufop")).toHaveLength(2);
+      expect(document.querySelectorAll(".grafico-barra-brasil")).toHaveLength(2);
     });
 
-    it("mostra o acerto da UFOP e a diferença para o Brasil, sem o número de questões", async () => {
+    it("trocar a disciplina troca o gráfico; edição sem questões da disciplina é avisada", async () => {
+      const usuario = userEvent.setup();
       await renderizar("evolucao");
-      const linha = evolucao().getByText("Redes de Computadores I").closest("tr");
-      const celulas = within(linha).getAllByRole("cell");
 
-      expect(celulas[1]).toHaveTextContent("45,0"); // 2017
-      expect(celulas[1]).toHaveTextContent("▼ 10,0");
-      expect(celulas[2]).toHaveTextContent("60,0"); // 2023
-      expect(celulas[2]).toHaveTextContent("▲ 10,0");
-      expect(celulas[2]).not.toHaveTextContent("questões"); // a tabela não mostra o número de questões
-      expect(celulas[2]).toHaveClass("curso-acima");
-      expect(celulas[1]).toHaveClass("curso-abaixo");
+      await usuario.selectOptions(
+        screen.getByRole("combobox", { name: "Disciplina" }),
+        "Circuitos Elétricos I",
+      );
+      expect(textos()).toEqual(expect.arrayContaining(["20,0", "30,0", "sem questões"]));
+      expect(document.querySelectorAll(".grafico-barra-ufop")).toHaveLength(1);
     });
 
-    it("edição em que a área não apareceu fica com traço", async () => {
+    it("o menu separa as disciplinas parecidas em subgrupos, com uma linha entre eles", async () => {
       await renderizar("evolucao");
-      const linha = evolucao().getByText("Circuitos Elétricos I").closest("tr");
+      const menu = screen.getByRole("combobox", { name: "Disciplina" });
 
-      expect(within(linha).getAllByRole("cell")[1]).toHaveTextContent("—");
+      const grupos = [...menu.querySelectorAll("optgroup")].map((g) => g.label);
+      expect(grupos).toEqual(["Sistemas computacionais e redes", "Eletrônica, sinais e controle"]);
+      expect(menu.querySelectorAll("hr")).toHaveLength(1);
+      expect(
+        [...menu.querySelectorAll("optgroup")[0].querySelectorAll("option")].map((o) => o.value),
+      ).toEqual(["Redes de Computadores I"]);
     });
 
     it("alterna entre Componente Específico e Formação Geral", async () => {
       const usuario = userEvent.setup();
       await renderizar("evolucao");
+      expect(screen.queryByRole("option", { name: "Sociologia" })).toBeNull();
 
-      expect(evolucao().queryByText("Sociologia")).not.toBeInTheDocument();
       await usuario.click(screen.getByRole("button", { name: "Formação Geral" }));
-      expect(evolucao().getByText("Sociologia")).toBeInTheDocument();
-      expect(evolucao().queryByText("Redes de Computadores I")).not.toBeInTheDocument();
-    });
-
-    it("área igual ao Brasil não mostra seta", async () => {
-      const usuario = userEvent.setup();
-      await renderizar("evolucao");
-      await usuario.click(screen.getByRole("button", { name: "Formação Geral" }));
-
-      expect(screen.getByText("igual ao Brasil")).toBeInTheDocument();
+      expect(screen.getByRole("combobox", { name: "Disciplina" })).toHaveValue("Sociologia");
+      expect(screen.queryByRole("option", { name: "Redes de Computadores I" })).toBeNull();
+      expect(textos()).toContain("igual ao Brasil");
     });
   });
 
   describe("mais acertos e mais erros por edição", () => {
     const abrirEdicao = (ano) => userEvent.click(screen.getByRole("button", { name: String(ano) }));
+    const clicar = (nome) => userEvent.click(screen.getByRole("button", { name: nome }));
     const lista = (titulo) => screen.getByRole("heading", { name: titulo }).closest("div");
     const nomes = (titulo) =>
       within(lista(titulo))
         .getAllByRole("row")
         .slice(1)
         .map((tr) => within(tr).getAllByRole("cell")[0].textContent);
+    const MAIS_ACERTOS_D = "Disciplinas com mais acertos (% de acerto)";
+    const MAIS_ERROS_D = "Disciplinas com mais erros (% de erro)";
+    const MAIS_ACERTOS_T = "Temas com mais acertos (% de acerto)";
+    const MAIS_ERROS_T = "Temas com mais erros (% de erro)";
 
     it("só mostra as listas depois de clicar numa edição, e clicar de novo esconde", async () => {
+      await renderizar("rankings");
+
+      expect(screen.queryByRole("table")).not.toBeInTheDocument();
+      await abrirEdicao(2023);
+      // começa com as disciplinas: duas listas (acertos e erros), não as quatro de uma vez
+      expect(screen.getAllByRole("table")).toHaveLength(2);
+      await abrirEdicao(2023);
+      expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    });
+
+    it("alterna entre disciplinas e temas", async () => {
+      await renderizar("rankings");
+      await abrirEdicao(2023);
+      expect(screen.queryByRole("heading", { name: MAIS_ACERTOS_T })).toBeNull();
+
+      await clicar("Temas");
+      expect(screen.queryByRole("heading", { name: MAIS_ACERTOS_D })).toBeNull();
+      expect(nomes(MAIS_ACERTOS_T)[0]).toMatch(/^OSPF/);
+      expect(nomes(MAIS_ERROS_T)[0]).toMatch(/^Kirchhoff/);
+    });
+
+    it("o leitor escolhe quantos itens ver", async () => {
       const usuario = userEvent.setup();
       await renderizar("rankings");
-
-      expect(screen.queryByRole("table")).not.toBeInTheDocument();
       await abrirEdicao(2023);
-      expect(screen.getAllByRole("table")).toHaveLength(4);
-      await usuario.click(screen.getByRole("button", { name: "2023" }));
-      expect(screen.queryByRole("table")).not.toBeInTheDocument();
+      await clicar("Temas");
+      const quantos = screen.getByRole("combobox", { name: "Quantos" });
+
+      expect(quantos).toHaveValue("3"); // o padrão (5) não cabe: vale o total de temas
+      expect(nomes(MAIS_ACERTOS_T)).toHaveLength(3);
+      await usuario.selectOptions(quantos, "3");
+      expect(nomes(MAIS_ACERTOS_T)).toHaveLength(3);
     });
 
-    it("mostra os temas do maior para o menor acerto na edição clicada", async () => {
+    it("as opções de 'Quantos' nunca passam do que existe (Formação Geral tem poucas disciplinas)", async () => {
       await renderizar("rankings");
       await abrirEdicao(2023);
+      const opcoes = () =>
+        within(screen.getByRole("combobox", { name: "Quantos" }))
+          .getAllByRole("option")
+          .map((o) => o.textContent);
 
-      expect(nomes("Temas com mais acertos (% de acerto)")[0]).toMatch(/^OSPF/);
-      expect(nomes("Temas com mais erros (% de erro)")[0]).toMatch(/^Kirchhoff/);
+      expect(opcoes()).toEqual(["2"]); // 2 disciplinas no Componente Específico de 2023
+      await clicar("Temas");
+      expect(opcoes()).toEqual(["3"]); // 3 temas
+      await clicar("Formação Geral");
+      await clicar("Disciplinas");
+      expect(opcoes()).toEqual(["1"]); // só Sociologia
     });
 
-    it("as listas de erros mostram os acertos da UFOP e do Brasil (a pior área ou tema primeiro)", async () => {
+    it("limita a lista ao número escolhido", async () => {
+      const usuario = userEvent.setup();
       await renderizar("rankings");
       await abrirEdicao(2023);
-      const primeira = within(lista("Temas com mais erros (% de erro)")).getAllByRole("row")[1];
+      await clicar("Temas");
+      await usuario.selectOptions(screen.getByRole("combobox", { name: "Quantos" }), "3");
+      expect(nomes(MAIS_ACERTOS_T)).toHaveLength(3);
+      // 1 só (ao filtrar por disciplina) vira uma linha
+      await usuario.selectOptions(
+        screen.getByRole("combobox", { name: "Disciplina" }),
+        "Circuitos Elétricos I",
+      );
+      expect(nomes(MAIS_ACERTOS_T)).toEqual([expect.stringMatching(/^Kirchhoff/)]);
+    });
+
+    it("nos temas, dá para filtrar por disciplina; em disciplinas esse filtro não existe", async () => {
+      const usuario = userEvent.setup();
+      await renderizar("rankings");
+      await abrirEdicao(2023);
+      expect(screen.queryByRole("combobox", { name: "Disciplina" })).toBeNull();
+
+      await clicar("Temas");
+      await usuario.selectOptions(
+        screen.getByRole("combobox", { name: "Disciplina" }),
+        "Redes de Computadores I",
+      );
+      expect(nomes(MAIS_ACERTOS_T)).toEqual([
+        expect.stringMatching(/^OSPF/),
+        expect.stringMatching(/^TCP/),
+      ]);
+    });
+
+    it("as listas de erros mostram os acertos da UFOP e do Brasil (a pior disciplina ou tema primeiro)", async () => {
+      await renderizar("rankings");
+      await abrirEdicao(2023);
+      await clicar("Temas");
+      const primeira = within(lista(MAIS_ERROS_T)).getAllByRole("row")[1];
       const celulas = within(primeira).getAllByRole("cell");
 
       expect(celulas).toHaveLength(3);
@@ -181,7 +252,7 @@ describe("DesempenhoPorArea", () => {
       expect(celulas[2]).toHaveTextContent("30,0"); // acerto do Brasil
     });
 
-    it("os cabeçalhos dizem se a coluna é de acertos ou de erros", async () => {
+    it("os cabeçalhos mostram só acertos, nunca colunas de erros", async () => {
       await renderizar("rankings");
       await abrirEdicao(2023);
 
@@ -190,65 +261,40 @@ describe("DesempenhoPorArea", () => {
           .getAllByRole("columnheader")
           .map((c) => c.textContent);
 
-      expect(cabecalhos("Áreas com mais acertos (% de acerto)")).toEqual([
-        "Área",
-        "Acertos UFOP",
-        "Acertos Brasil",
-      ]);
-      // a lista de erros também mostra só acertos, para não confundir
-      expect(cabecalhos("Temas com mais erros (% de erro)")).toEqual([
-        "Tema",
-        "Acertos UFOP",
-        "Acertos Brasil",
-      ]);
-    });
-
-    it("nenhuma tabela tem coluna de erros, e a frase de instrução não existe mais", async () => {
-      await renderizar("rankings");
-      await abrirEdicao(2023);
-
-      expect(screen.queryByText(/Erros/)).not.toBeInTheDocument();
+      expect(cabecalhos(MAIS_ACERTOS_D)).toEqual(["Disciplina", "Acertos UFOP", "Acertos Brasil"]);
+      expect(cabecalhos(MAIS_ERROS_D)).toEqual(["Disciplina", "Acertos UFOP", "Acertos Brasil"]);
       expect(screen.queryByText(/Clique numa edição/)).not.toBeInTheDocument();
     });
 
-    it("as áreas informam o componente e quantas questões têm", async () => {
+    it("as disciplinas informam quantas questões têm", async () => {
       await renderizar("rankings");
       await abrirEdicao(2023);
-      const redes = within(lista("Áreas com mais acertos (% de acerto)")).getByText(/^2 questões$/);
 
-      expect(redes).toBeInTheDocument();
+      expect(within(lista(MAIS_ACERTOS_D)).getByText(/^2 questões$/)).toBeInTheDocument();
     });
 
     it("as listas são do componente escolhido: Formação Geral e Componente Específico não se misturam", async () => {
-      const usuario = userEvent.setup();
       await renderizar("rankings");
       await abrirEdicao(2023);
 
-      // começa pelo Componente Específico: a área de Formação Geral não aparece
-      expect(nomes("Áreas com mais acertos (% de acerto)")).toEqual([
+      expect(nomes(MAIS_ACERTOS_D)).toEqual([
         expect.stringMatching(/^Redes de Computadores I/),
         expect.stringMatching(/^Circuitos Elétricos I/),
       ]);
-      expect(screen.queryByText("Desigualdade")).not.toBeInTheDocument();
 
-      await usuario.click(screen.getByRole("button", { name: "Formação Geral" }));
-      expect(nomes("Áreas com mais acertos (% de acerto)")).toEqual([
-        expect.stringMatching(/^Sociologia/),
-      ]);
-      expect(nomes("Temas com mais acertos (% de acerto)")).toEqual([
-        expect.stringMatching(/^Desigualdade/),
-      ]);
+      await clicar("Formação Geral");
+      expect(nomes(MAIS_ACERTOS_D)).toEqual([expect.stringMatching(/^Sociologia/)]);
+      await clicar("Temas");
+      expect(nomes(MAIS_ACERTOS_T)).toEqual([expect.stringMatching(/^Desigualdade/)]);
     });
 
     it("trocar a edição troca as listas", async () => {
-      const usuario = userEvent.setup();
       await renderizar("rankings");
       await abrirEdicao(2023);
-      await usuario.click(screen.getByRole("button", { name: "2017" }));
+      await clicar("Temas");
+      await abrirEdicao(2017);
 
-      expect(nomes("Temas com mais acertos (% de acerto)")).toEqual([
-        expect.stringMatching(/^Firewall/),
-      ]);
+      expect(nomes(MAIS_ACERTOS_T)).toEqual([expect.stringMatching(/^Firewall/)]);
     });
   });
 
@@ -261,7 +307,7 @@ describe("DesempenhoPorArea", () => {
     expect(screen.queryByText(TITULOS.evolucao)).not.toBeInTheDocument();
   });
 
-  it("explica a fonte e que só se comparam áreas do mesmo curso e ano", async () => {
+  it("explica a fonte e que só se comparam disciplinas do mesmo curso e ano", async () => {
     const { container } = await renderizar("evolucao");
 
     expect(container).toHaveTextContent("Relatórios de Curso do Enade (Engenharia de Computação");

@@ -845,7 +845,8 @@ tbody tr:nth-child(even) {
 }
 
 .disciplina summary {
-  min-height: 80px;
+  box-sizing: border-box;
+  height: 96px; /* mesma altura em todas as caixas, mesmo com nome de 3 linhas */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -902,14 +903,14 @@ tbody tr:nth-child(even) {
 
 .disciplina ul {
   margin: 0;
-  padding: 10px 14px 14px 34px;
+  padding: 6px 14px 10px;
   font-size: 0.95rem;
   color: #4b5563;
   border-top: 1px solid var(--borda);
 }
 
 .disciplina li {
-  margin-bottom: 4px;
+  margin-bottom: 0;
 }
 
 .tag-discursiva {
@@ -1553,7 +1554,8 @@ tbody tr:nth-child(even) {
     width: 100%;
   }
 
-  .tabela-questoes th:first-child,
+  /* só a coluna "Questão": a 2ª linha do cabeçalho (UFOP, Brasil...) também tem um th que é o primeiro filho */
+  .tabela-questoes thead tr:first-child th:first-child,
   .tabela-questoes td:first-child {
     position: sticky;
     left: 0;
@@ -1561,7 +1563,8 @@ tbody tr:nth-child(even) {
     background: #fff;
   }
 
-  .tabela-questoes th:first-child {
+  .tabela-questoes thead tr:first-child th:first-child {
+    z-index: 2;
     background: var(--cinza);
   }
 
@@ -1574,19 +1577,7 @@ tbody tr:nth-child(even) {
   }
 }
 
-/* ===== Desempenho por área (Edições) ===== */
-.tabela-evolucao td.num {
-  text-align: center;
-  min-width: 96px;
-}
-
-.tabela-evolucao td small {
-  display: block;
-  font-weight: 400;
-  font-size: 0.75rem;
-  line-height: 1.3;
-}
-
+/* ===== Desempenho por disciplina (Edições) ===== */
 .ranking .detalhe {
   color: var(--cinza);
 }
@@ -1654,4 +1645,412 @@ tbody tr:nth-child(even) {
 .carregando {
   opacity: 0.55;
   transition: opacity 0.15s ease;
+}
+
+/* frase curta logo abaixo do título da página */
+.introducao {
+  margin: -4px 0 0;
+  max-width: 62rem;
+  color: var(--cinza);
+}
+
+/* ===== Abas da página (Preparatório Enade 2026, Dados Edições Anteriores) ===== */
+.abas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 16px 0 24px;
+  border-bottom: 2px solid var(--borda);
+}
+
+.aba {
+  padding: 12px 22px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--cinza-escuro);
+  background: transparent;
+  border: none;
+  border-bottom: 4px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+}
+
+.aba:hover {
+  color: var(--vinho);
+}
+
+.aba.ativa {
+  color: var(--vinho);
+  border-bottom-color: var(--vinho);
+}
+
+/* ===== Tabela de acertos por questão: ordenar, comparar e explicações ao passar o mouse ===== */
+.tabela-questoes th[title] {
+  cursor: help;
+}
+
+.tabela-questoes th .ordenar {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 4px;
+  font: inherit;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.18); /* a caixinha aparece em todas as colunas que ordenam */
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tabela-questoes th .ordenar:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.tabela-questoes th .ordenar.ativa {
+  background: rgba(255, 255, 255, 0.32); /* a coluna ordenada fica um pouco mais clara */
+}
+
+.tabela-questoes th .ordenar span {
+  font-size: 0.75em;
+  opacity: 0.85;
+}
+
+.seletor-comparacao {
+  width: 9.5rem;
+  max-width: 100%;
+  padding: 3px 6px;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--cinza-escuro);
+  background: #fff;
+  border: 1px solid var(--borda);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.comparar-cores {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: var(--cinza-escuro);
+}
+
+/* Tema da questão com o botão "Ver questão" */
+.disciplina li {
+  display: flex;
+  padding: 8px 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ver-questao {
+  flex: none;
+  padding: 2px 10px;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--vinho);
+  background: #fff;
+  border: 1px solid var(--vinho);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.ver-questao:hover,
+.ver-questao:focus-visible {
+  color: #fff;
+  background: var(--vinho);
+}
+
+/* janela com a imagem da questão */
+.questao-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.questao-janela {
+  display: flex;
+  flex-direction: column;
+  width: min(960px, 100%);
+  max-height: 100%;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.questao-topo {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.questao-topo h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--vinho);
+}
+
+.questao-topo p {
+  margin: 2px 0 0;
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+.questao-fechar {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: #4b5563;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.questao-fechar:hover,
+.questao-fechar:focus-visible {
+  background: #f3f4f6;
+}
+
+.questao-corpo {
+  overflow: auto;
+  padding: 12px 16px;
+}
+
+.questao-corpo img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.questao-aviso {
+  margin: 24px 0;
+  text-align: center;
+  color: #6b7280;
+}
+
+.questao-gabarito {
+  padding: 10px 16px;
+  font-weight: 700;
+  color: var(--vinho);
+  background: #faf5f6;
+  border-top: 1px solid var(--borda);
+}
+
+.questao-imagem-carregando {
+  height: 0;
+  opacity: 0;
+}
+
+/* linha fina entre um assunto e o seguinte */
+.disciplina li + li {
+  border-top: 1px solid var(--borda);
+}
+
+.disciplina ul {
+  list-style: none;
+}
+
+/* parte entre parênteses (objetivas e discursivas) mais clara que o resto da linha */
+.detalhe-questoes {
+  color: #6b7280;
+}
+
+/* ===== Gráfico de evolução por disciplina ===== */
+.grafico-escolha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  font-weight: 600;
+  color: var(--cinza-escuro);
+}
+
+.grafico-escolha select {
+  min-width: 260px;
+  max-width: 100%;
+  padding: 6px 10px;
+  font: inherit;
+  font-weight: 400;
+  border: 1px solid var(--borda);
+  border-radius: 4px;
+  background: #fff;
+}
+
+.grafico-legenda {
+  display: flex;
+  gap: 16px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.legenda-cor {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 4px;
+  border-radius: 2px;
+  vertical-align: -1px;
+}
+
+.legenda-ufop,
+.grafico-barra-ufop {
+  background: var(--vinho);
+  fill: var(--vinho);
+}
+
+.legenda-brasil,
+.grafico-barra-brasil {
+  background: #9ca3af;
+  fill: #9ca3af;
+}
+
+.grafico-rolavel {
+  overflow-x: auto;
+}
+
+.grafico-svg {
+  display: block;
+  min-width: 480px;
+  width: 100%;
+  height: auto;
+  margin-top: 8px;
+}
+
+.grafico-grade {
+  stroke: #e5e7eb;
+}
+
+.grafico-eixo {
+  font-size: 11px;
+  fill: #6b7280;
+}
+
+.grafico-ano {
+  font-size: 14px;
+  font-weight: 700;
+  fill: var(--cinza-escuro);
+}
+
+.grafico-valor {
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--cinza-escuro);
+}
+
+.grafico-dif {
+  font-size: 12px;
+  fill: var(--cinza);
+}
+
+.grafico-dif.dif-acima {
+  fill: #1b6b3a;
+}
+
+.grafico-dif.dif-abaixo {
+  fill: var(--vinho);
+}
+
+/* menu da disciplina: títulos dos subgrupos em destaque e linha entre eles */
+.grafico-escolha optgroup {
+  font-weight: 700;
+  color: var(--vinho);
+}
+
+.grafico-escolha option {
+  font-weight: 400;
+  color: var(--cinza-escuro);
+}
+
+/* celular: o menu da disciplina ocupa a largura toda, com letra de 16px (o iPhone não dá zoom) e itens que quebram linha */
+@media (max-width: 760px) {
+  .grafico-escolha {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .grafico-escolha select {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    padding: 10px 12px;
+    font-size: 16px;
+  }
+
+  .grafico-escolha option,
+  .grafico-escolha optgroup {
+    font-size: 14px;
+    white-space: normal;
+  }
+}
+
+/* filtros de "Mais acertos e erros" */
+.filtros-ranking {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.filtros-ranking .subtopicos {
+  margin: 12px 0 0;
+}
+
+.filtro-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--cinza-escuro);
+}
+
+.filtro-select select {
+  max-width: 100%;
+  padding: 6px 10px;
+  font: inherit;
+  font-weight: 400;
+  background: #fff;
+  border: 1px solid var(--borda);
+  border-radius: 4px;
+}
+
+@media (max-width: 760px) {
+  .filtros-ranking .subtopicos {
+    width: 100%;
+  }
+
+  .filtro-select {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 4px;
+  }
+
+  .filtro-select select {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 16px;
+  }
 }

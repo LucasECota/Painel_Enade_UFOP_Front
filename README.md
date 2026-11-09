@@ -28,35 +28,35 @@ entenda **o que costuma cair na prova**, **como o curso se saiu** e **onde se pr
 ## O que o painel mostra
 
 ### Início
-Apresentação do painel e atalhos para as quatro áreas.
+Apresentação do painel e atalhos para as duas áreas: **Preparatório Enade 2026** e **Dados Edições Anteriores**.
 
 <img src="docs/screenshots/01-inicio.png" alt="Página inicial com os atalhos" width="860">
 
-### AvaliaUFOP
+### Preparatório Enade 2026 — aba Cursos no Moodle
 Os três cursos de preparação para o Enade 2026 (um por curso), com a estrutura de módulos e
 atividades e o botão que leva direto à inscrição no Moodle da UFOP.
 
 <img src="docs/screenshots/02-avaliaufop.png" alt="Página do AvaliaUFOP com os cursos e os módulos" width="860">
 
-### Desempenho
+### Preparatório Enade 2026 — aba Desempenho dos alunos
 Inscritos, concluintes e aproveitamento médio dos alunos em cada atividade do AvaliaUFOP, com uma
 linha tracejada marcando os 60% exigidos para o certificado. Os dados vêm de exports do Moodle,
 **anonimizados** antes de chegarem ao repositório.
 
 <img src="docs/screenshots/03-desempenho.png" alt="Painel de desempenho dos alunos no AvaliaUFOP" width="860">
 
-### Edições
+### Dados Edições Anteriores — aba O que o Enade cobrou
 O que o Enade cobrou em cada edição (2014 em diante): quantas questões por disciplina e quais
-assuntos, para direcionar os estudos, e a tabela de **acertos por questão** do Relatório de Curso do
+assuntos, para direcionar os estudos, o botão **Ver questão** (imagem da prova e gabarito) e a tabela de **acertos por questão** do Relatório de Curso do
 INEP, com a disciplina e o tema de cada uma, além de duas análises feitas
-a partir dessas tabelas: a **evolução de cada área** ao longo das edições (UFOP comparada com o
-Brasil na mesma edição) e as **áreas e temas com mais acertos e mais erros** em cada edição, para
+a partir dessas tabelas: a **evolução de cada disciplina** ao longo das edições (UFOP comparada com o
+Brasil na mesma edição) e as **disciplinas e temas com mais acertos e mais erros** em cada edição, para
 Formação Geral e Componente Específico. Cada uma é um subtópico clicável; cada disciplina
 abre e fecha para não sobrecarregar a leitura.
 
 <img src="docs/screenshots/04-edicoes.png" alt="Disciplinas e assuntos do Enade 2023 de Engenharia de Computação" width="860">
 
-### Resultados
+### Dados Edições Anteriores — aba Resultados dos cursos
 Conceito Enade de cada edição, comparação das médias do ICEA com as do Brasil (Formação Geral
 e Componente Específico), perfil socioeconômico dos concluintes e os **relatórios oficiais do INEP
 para baixar**. Os blocos são expansíveis.
@@ -186,11 +186,12 @@ src/
 ├── api.js                 endereço da API (VITE_API_URL)
 ├── App.jsx                rotas
 ├── components/
-│   ├── DesempenhoPorArea.jsx  evolução por área e rankings de acertos e erros
+│   ├── DesempenhoPorArea.jsx  evolução por disciplina e rankings de acertos e erros
 │   ├── Layout.jsx         cabeçalho, menu e rodapé
+│   ├── PaginaComAbas.jsx  página com abas (a aba vai para o endereço, ?aba=)
 │   └── Topico.jsx         seção que abre e fecha
 ├── data/avaliaufop.js     cursos, módulos e links do Moodle
-├── pages/                 Início, AvaliaUFOP, Desempenho, Edições e Resultados
+├── pages/                 Início, Preparatório Enade 2026 e Dados Edições Anteriores (cada uma com abas)
 ├── test/                  utilitários dos testes (API simulada)
 └── index.css              estilos
 docs/screenshots/          imagens deste README

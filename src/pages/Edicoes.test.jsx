@@ -33,7 +33,29 @@ const dadosDoCurso = {
     discursivas: 3,
     disciplinas: [
       { nome: "Compiladores I", qtd: 1, assuntos: ["Análise léxica"] },
-      { nome: "Redes de Computadores I", qtd: 3, assuntos: ["OSPF", "TCP e UDP"] },
+      {
+        nome: "Redes de Computadores I",
+        qtd: 3,
+        assuntos: ["OSPF", "TCP e UDP"],
+        questoes: [
+          {
+            id: "11",
+            tipo: "objetiva",
+            tema: "OSPF",
+            gabarito: "C",
+            situacao: "valida",
+            imagem: "2023/ec-11.webp",
+          },
+          {
+            id: "12",
+            tipo: "objetiva",
+            tema: "TCP e UDP",
+            gabarito: null,
+            situacao: "anulada",
+            imagem: "2023/ec-12.webp",
+          },
+        ],
+      },
       {
         nome: "Algoritmos e Estruturas de Dados I",
         qtd: 2,
@@ -177,15 +199,14 @@ describe("Edições", () => {
     await usuario.click(cardDoCurso("Computação"));
     await usuario.click(screen.getByRole("button", { name: "2023" }));
 
-    expect(
-      await screen.findByText("Total de questões: 40 (35 objetivas e 5 discursivas)"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Formação Geral: 10 (8 objetivas e 2 discursivas)"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Componente Específico: 30 (27 objetivas e 3 discursivas)"),
-    ).toBeInTheDocument();
+    const total = await screen.findByText("Total de questões: 40");
+    expect(total).toHaveTextContent(/^Total de questões: 40$/);
+    expect(screen.getByText(/^Formação Geral: 10/)).toHaveTextContent(
+      "Formação Geral: 10 (8 objetivas e 2 discursivas)",
+    );
+    expect(screen.getByText(/^Componente Específico: 30/)).toHaveTextContent(
+      "Componente Específico: 30 (27 objetivas e 3 discursivas)",
+    );
   });
 
   describe("troca de ano sem piscar", () => {
@@ -297,7 +318,10 @@ describe("Edições", () => {
     await usuario.click(screen.getByRole("button", { name: "2023" }));
     await screen.findByText("Sociologia");
 
-    const titulos = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
+    const titulos = screen
+      .getAllByRole("heading", { level: 2 })
+      .map((h) => h.textContent)
+      .filter((t) => t.startsWith("Disciplinas ("));
     expect(titulos).toEqual([
       "Disciplinas (Formação Geral) — 2023",
       "Disciplinas (Componente Específico) — 2023",
@@ -332,6 +356,33 @@ describe("Edições", () => {
     // sem discursiva, a lista continua sem títulos
     const redes = screen.getByText("Redes de Computadores I").closest("details");
     expect(redes.querySelector(".grupo-questoes")).toBeNull();
+  });
+
+  it("cada tema tem o botão 'Ver questão', que mostra a imagem e o gabarito", async () => {
+    const usuario = userEvent.setup();
+    await renderizar();
+    await usuario.click(cardDoCurso("Computação"));
+    await usuario.click(screen.getByRole("button", { name: "2023" }));
+    await screen.findByText("Redes de Computadores I");
+
+    const redes = screen.getByText("Redes de Computadores I").closest("details");
+    const botoes = within(redes).getAllByRole("button", { name: "Ver questão" });
+    expect(botoes).toHaveLength(2);
+
+    await usuario.click(botoes[0]);
+    const janela = screen.getByRole("dialog", { name: /Questão 11/ });
+    expect(within(janela).getByRole("img")).toHaveAttribute(
+      "src",
+      `${API_URL}/enade/imagens/2023/ec-11.webp`,
+    );
+    expect(within(janela).getByText("Gabarito: C")).toBeInTheDocument();
+
+    await usuario.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
+
+    // sem "questoes" na API (outras disciplinas) não aparece botão
+    const compiladores = screen.getByText("Compiladores I").closest("details");
+    expect(within(compiladores).queryByRole("button", { name: "Ver questão" })).toBeNull();
   });
 
   it("usa 'questão' no singular e 'questões' no plural, sem mostrar a contagem de assuntos", async () => {
@@ -381,7 +432,7 @@ describe("Edições", () => {
       const questoes = screen.getByRole("button", { name: "Acertos por questão" });
       expect(assuntos).toHaveAttribute("aria-pressed", "true");
       expect(questoes).toHaveAttribute("aria-pressed", "false");
-      expect(screen.getByRole("button", { name: "Evolução por área" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Evolução por disciplina" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Mais acertos e erros" })).toBeInTheDocument();
 
       expect(screen.getByText("Edições com assuntos disponíveis:")).toBeInTheDocument();
@@ -407,31 +458,31 @@ describe("Edições", () => {
       );
     });
 
-    it("'Evolução por área' e 'Mais acertos e erros' são subpáginas separadas, cada uma com a sua parte", async () => {
+    it("'Evolução por disciplina' e 'Mais acertos e erros' são subpáginas separadas, cada uma com a sua parte", async () => {
       const usuario = userEvent.setup();
       const fetchFalso = await renderizar();
       await usuario.click(cardDoCurso("Computação"));
 
-      await usuario.click(screen.getByRole("button", { name: "Evolução por área" }));
+      await usuario.click(screen.getByRole("button", { name: "Evolução por disciplina" }));
       expect(
-        await screen.findByText("Desempenho de cada área ao longo das edições"),
+        await screen.findByText("Desempenho de cada disciplina ao longo das edições"),
       ).toBeInTheDocument();
       expect(
-        screen.queryByText("Áreas e temas com mais acertos e mais erros"),
+        screen.queryByText("Disciplinas e temas com mais acertos e mais erros"),
       ).not.toBeInTheDocument();
       expect(fetchFalso).toHaveBeenCalledWith(`${API_URL}/enade/ec/desempenho-areas`);
       expect(screen.queryByText("Edições com assuntos disponíveis:")).not.toBeInTheDocument();
 
       await usuario.click(screen.getByRole("button", { name: "Mais acertos e erros" }));
       expect(
-        await screen.findByText("Áreas e temas com mais acertos e mais erros"),
+        await screen.findByText("Disciplinas e temas com mais acertos e mais erros"),
       ).toBeInTheDocument();
       expect(
-        screen.queryByText("Desempenho de cada área ao longo das edições"),
+        screen.queryByText("Desempenho de cada disciplina ao longo das edições"),
       ).not.toBeInTheDocument();
     });
 
-    it("o desempenho por área é buscado já ao escolher o curso e só uma vez, então trocar de subtópico não pisca", async () => {
+    it("o desempenho por disciplina é buscado já ao escolher o curso e só uma vez, então trocar de subtópico não pisca", async () => {
       const usuario = userEvent.setup();
       const fetchFalso = await renderizar();
       const pedidosDoDesempenho = () =>
@@ -440,13 +491,17 @@ describe("Edições", () => {
       await usuario.click(cardDoCurso("Computação"));
       expect(pedidosDoDesempenho()).toBe(1); // antes de abrir qualquer subtópico
 
-      await usuario.click(screen.getByRole("button", { name: "Evolução por área" }));
-      await screen.findByText("Desempenho de cada área ao longo das edições");
+      await usuario.click(screen.getByRole("button", { name: "Evolução por disciplina" }));
+      await screen.findByText("Desempenho de cada disciplina ao longo das edições");
       await usuario.click(screen.getByRole("button", { name: "Mais acertos e erros" }));
       // a tela já nasce completa, sem passar por um estado vazio
-      expect(screen.getByText("Áreas e temas com mais acertos e mais erros")).toBeInTheDocument();
-      await usuario.click(screen.getByRole("button", { name: "Evolução por área" }));
-      expect(screen.getByText("Desempenho de cada área ao longo das edições")).toBeInTheDocument();
+      expect(
+        screen.getByText("Disciplinas e temas com mais acertos e mais erros"),
+      ).toBeInTheDocument();
+      await usuario.click(screen.getByRole("button", { name: "Evolução por disciplina" }));
+      expect(
+        screen.getByText("Desempenho de cada disciplina ao longo das edições"),
+      ).toBeInTheDocument();
 
       expect(pedidosDoDesempenho()).toBe(1);
     });

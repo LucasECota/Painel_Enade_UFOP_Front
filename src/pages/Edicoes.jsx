@@ -1,6 +1,7 @@
 import { Fragment, useState, useEffect } from "react";
 import { cursos as cursosAvaliaUfop } from "../data/avaliaufop";
 import { API_URL } from "../api";
+import VerQuestao from "../components/QuestaoModal";
 import TabelaQuestoes from "../components/TabelaQuestoes";
 import DesempenhoPorArea from "../components/DesempenhoPorArea";
 import { carregarDesempenho } from "../desempenhoCache";
@@ -23,23 +24,27 @@ function useEhCelular() {
 const SUBTOPICOS = [
   { chave: "assuntos", titulo: "Assuntos por disciplina" },
   { chave: "questoes", titulo: "Acertos por questão" },
-  { chave: "evolucao", titulo: "Evolução por área" },
+  { chave: "evolucao", titulo: "Evolução por disciplina" },
   { chave: "rankings", titulo: "Mais acertos e erros" },
 ];
 
 // Lista os assuntos de uma disciplina. Quando ela tem questão discursiva, separa as discursivas
 // das objetivas (a API manda as discursivas primeiro na lista).
 function AssuntosDaDisciplina({ disciplina }) {
-  const { assuntos, discursivas = 0 } = disciplina;
-  const lista = (itens) => (
+  const { assuntos, discursivas = 0, questoes = [] } = disciplina;
+  // "questoes" segue a ordem de "assuntos": cada tema ganha o botão que abre a questão
+  const lista = (itens, inicio) => (
     <ul>
       {itens.map((assunto, indice) => (
-        <li key={indice}>{assunto}</li>
+        <li key={indice}>
+          <span>{assunto}</span>
+          <VerQuestao questao={questoes[inicio + indice]} />
+        </li>
       ))}
     </ul>
   );
 
-  if (discursivas === 0) return lista(assuntos);
+  if (discursivas === 0) return lista(assuntos, 0);
 
   const doDiscursivas = assuntos.slice(0, discursivas);
   const dasObjetivas = assuntos.slice(discursivas);
@@ -47,23 +52,31 @@ function AssuntosDaDisciplina({ disciplina }) {
   return (
     <>
       <h4 className="grupo-questoes">{discursivas === 1 ? "Discursiva" : "Discursivas"}</h4>
-      {lista(doDiscursivas)}
+      {lista(doDiscursivas, 0)}
       {dasObjetivas.length > 0 && (
         <>
           <h4 className="grupo-questoes">{dasObjetivas.length === 1 ? "Objetiva" : "Objetivas"}</h4>
-          {lista(dasObjetivas)}
+          {lista(dasObjetivas, discursivas)}
         </>
       )}
     </>
   );
 }
 
-// "10 (8 objetivas e 2 discursivas)": quando a API não informa as discursivas, mostra só o total
-function quantasQuestoes(total, discursivas) {
-  if (typeof discursivas !== "number") return `${total}`;
+// " (8 objetivas e 2 discursivas)": quando a API não informa as discursivas, não mostra o detalhe
+function detalheDasQuestoes(total, discursivas) {
+  if (typeof discursivas !== "number") return null;
   const objetivas = total - discursivas;
   const plural = (n, singular, pluralTexto) => `${n} ${n === 1 ? singular : pluralTexto}`;
-  return `${total} (${plural(objetivas, "objetiva", "objetivas")} e ${plural(discursivas, "discursiva", "discursivas")})`;
+  return (
+    <>
+      {" "}
+      <span className="detalhe-questoes">
+        ({plural(objetivas, "objetiva", "objetivas")} e{" "}
+        {plural(discursivas, "discursiva", "discursivas")})
+      </span>
+    </>
+  );
 }
 
 // Disciplinas de um componente da prova, da que tem mais questões para a que tem menos.
@@ -142,7 +155,7 @@ function Edicoes() {
   // um ano que não existe para o novo curso).
   // Clicar de novo no curso que já está aberto fecha as opções.
   function selecionarCurso(chave) {
-    // já busca o desempenho por área em segundo plano: quando o leitor abrir esses subtópicos,
+    // já busca o desempenho por disciplina em segundo plano: quando o leitor abrir esses subtópicos,
     // os dados estarão prontos e a tela não pisca
     const escolhido = cursos.find((c) => c.chave === chave);
     if (chave !== cursoSelecionado && (escolhido?.anosComQuestoes ?? []).length > 0) {
@@ -197,22 +210,14 @@ function Edicoes() {
 
       {dadosDoCurso && (
         <div className={dadosDoCurso.ano === anoSelecionado ? undefined : "carregando"}>
+          <p>Total de questões: {dadosDoCurso.totalQuestoes}</p>
           <p>
-            Total de questões:{" "}
-            {quantasQuestoes(
-              dadosDoCurso.totalQuestoes,
-              typeof dadosDoCurso.fg.discursivas === "number" &&
-                typeof dadosDoCurso.ce.discursivas === "number"
-                ? dadosDoCurso.fg.discursivas + dadosDoCurso.ce.discursivas
-                : undefined,
-            )}
+            Formação Geral: {dadosDoCurso.fg.total}
+            {detalheDasQuestoes(dadosDoCurso.fg.total, dadosDoCurso.fg.discursivas)}
           </p>
           <p>
-            Formação Geral: {quantasQuestoes(dadosDoCurso.fg.total, dadosDoCurso.fg.discursivas)}
-          </p>
-          <p>
-            Componente Específico:{" "}
-            {quantasQuestoes(dadosDoCurso.ce.total, dadosDoCurso.ce.discursivas)}
+            Componente Específico: {dadosDoCurso.ce.total}
+            {detalheDasQuestoes(dadosDoCurso.ce.total, dadosDoCurso.ce.discursivas)}
           </p>
 
           <ListaDeDisciplinas
@@ -260,7 +265,7 @@ function Edicoes() {
 
   return (
     <div>
-      <h1>Edições do Enade</h1>
+      <h2>Edições do Enade</h2>
       <p>
         Escolha um curso para ver o que o Enade cobrou em cada disciplina e como os concluintes se
         saíram em cada questão, ajudando a direcionar os estudos.

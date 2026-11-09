@@ -322,3 +322,194 @@ describe("TabelaQuestoes", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("TabelaQuestoes: ordenar, comparar e explicações", () => {
+  async function abrir() {
+    const usuario = userEvent.setup();
+    simularApi({ "/enade/ec/questoes": tabela() });
+    render(<TabelaQuestoes chave="ec" anos={[2023]} />);
+    await usuario.click(screen.getByRole("button", { name: "2023" }));
+    await screen.findByText("Tema da questão 10");
+    return usuario;
+  }
+  // números das questões do Componente Específico, na ordem em que aparecem
+  const ordemDaProva = () =>
+    [...document.querySelectorAll("table")[1].querySelectorAll("td.questao-numero")].map((td) =>
+      Number(td.textContent),
+    );
+  const cabecalho = (nome) => screen.getAllByRole("button", { name: new RegExp(`^${nome}`) })[1];
+
+  describe("ordenar", () => {
+    it("começa pelo número da questão, em ordem crescente", async () => {
+      await abrir();
+
+      expect(ordemDaProva()).toEqual([10, 11, 17, 25]);
+      expect(cabecalho("Questão").closest("th")).toHaveAttribute("aria-sort", "ascending");
+    });
+
+    it("clicar em Questão inverte a ordem, e de novo volta", async () => {
+      const usuario = await abrir();
+
+      await usuario.click(cabecalho("Questão"));
+      expect(ordemDaProva()).toEqual([25, 17, 11, 10]);
+      expect(cabecalho("Questão").closest("th")).toHaveAttribute("aria-sort", "descending");
+
+      await usuario.click(cabecalho("Questão"));
+      expect(ordemDaProva()).toEqual([10, 11, 17, 25]);
+    });
+
+    it("clicar em UFOP ordena pelo acerto, do menor para o maior, e de novo do maior para o menor", async () => {
+      const usuario = await abrir();
+
+      await usuario.click(cabecalho("UFOP"));
+      // 31,1 (questão 10) e 44,4 (questão 11); as sem percentual ficam no fim
+      expect(ordemDaProva()).toEqual([10, 11, 17, 25]);
+
+      await usuario.click(cabecalho("UFOP"));
+      expect(ordemDaProva()).toEqual([11, 10, 17, 25]);
+      expect(cabecalho("UFOP").closest("th")).toHaveAttribute("aria-sort", "descending");
+    });
+
+    it("as questões anuladas e desconsideradas ficam no fim, qualquer que seja o sentido", async () => {
+      const usuario = await abrir();
+
+      await usuario.click(cabecalho("UFOP"));
+      await usuario.click(cabecalho("UFOP"));
+
+      expect(ordemDaProva().slice(-2)).toEqual([17, 25]);
+    });
+
+    it("só uma coluna fica ordenada por vez (a outra volta a ficar sem ordem)", async () => {
+      const usuario = await abrir();
+
+      await usuario.click(cabecalho("UFOP"));
+
+      expect(cabecalho("UFOP").closest("th")).toHaveAttribute("aria-sort", "ascending");
+      expect(cabecalho("Questão").closest("th")).toHaveAttribute("aria-sort", "none");
+    });
+
+    it("a ordem vale para as duas tabelas (Formação Geral e Componente Específico)", async () => {
+      const usuario = await abrir();
+
+      await usuario.click(cabecalho("Questão"));
+
+      for (const th of document.querySelectorAll("table thead th[aria-sort]")) {
+        // cada tabela tem um cabeçalho "Questão" e um "UFOP"; só o primeiro está ordenado
+        expect(["descending", "none"]).toContain(th.getAttribute("aria-sort"));
+      }
+    });
+  });
+
+  describe("comparar com outro grupo", () => {
+    it("a tabela resumida começa comparando com o Brasil, e a escolha fica no cabeçalho", async () => {
+      await abrir();
+      const seletores = screen.getAllByRole("combobox", { name: "Comparar a UFOP com" });
+
+      expect(seletores).toHaveLength(2); // um por tabela
+      expect(seletores[0]).toHaveValue("brasil");
+      expect(seletores[0].closest("th")).not.toBeNull();
+      expect([...seletores[0].options].map((o) => o.textContent)).toEqual([
+        "Estado (UF)",
+        "Região",
+        "Categoria administrativa",
+        "Organização acadêmica",
+        "Brasil",
+      ]);
+    });
+
+    it("escolher Estado troca o valor da coluna e a cor do número da UFOP", async () => {
+      const usuario = await abrir();
+      const linha10 = () => screen.getByText("10", { selector: "td.questao-numero" }).closest("tr");
+
+      expect(within(linha10()).getByText("38,2")).toBeInTheDocument(); // Brasil
+      expect(within(linha10()).getByText("31,1")).toHaveClass("curso-abaixo");
+
+      await usuario.selectOptions(
+        screen.getAllByRole("combobox", { name: "Comparar a UFOP com" })[0],
+        "uf",
+      );
+
+      expect(within(linha10()).getByText("36,6")).toBeInTheDocument(); // Estado
+      expect(within(linha10()).queryByText("38,2")).not.toBeInTheDocument();
+      expect(within(linha10()).getByText("31,1")).toHaveClass("curso-abaixo"); // 31,1 < 36,6
+    });
+
+    it("a escolha vale para as duas tabelas ao mesmo tempo", async () => {
+      const usuario = await abrir();
+
+      await usuario.selectOptions(
+        screen.getAllByRole("combobox", { name: "Comparar a UFOP com" })[0],
+        "regiao",
+      );
+
+      for (const seletor of screen.getAllByRole("combobox", { name: "Comparar a UFOP com" })) {
+        expect(seletor).toHaveValue("regiao");
+      }
+    });
+
+    it("a cor muda conforme o grupo: abaixo do Brasil, mas acima da Região (31,1 contra 38,2 e 30,7)", async () => {
+      const usuario = await abrir();
+      const linha10 = () => screen.getByText("10", { selector: "td.questao-numero" }).closest("tr");
+
+      expect(within(linha10()).getByText("31,1")).toHaveClass("curso-abaixo");
+
+      await usuario.selectOptions(
+        screen.getAllByRole("combobox", { name: "Comparar a UFOP com" })[0],
+        "regiao",
+      );
+
+      expect(within(linha10()).getByText("30,7")).toBeInTheDocument();
+      expect(within(linha10()).getByText("31,1")).toHaveClass("curso-acima");
+    });
+
+    it("na tabela completa os grupos aparecem todos como colunas e o seletor vai para a barra de cima", async () => {
+      const usuario = await abrir();
+
+      await usuario.click(screen.getByRole("button", { name: "Ver todas as colunas" }));
+
+      const seletores = screen.getAllByRole("combobox", { name: "Comparar a UFOP com" });
+      expect(seletores).toHaveLength(1);
+      expect(seletores[0].closest("th")).toBeNull();
+      expect(screen.getAllByRole("columnheader", { name: "Brasil" }).length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("explicações ao passar o mouse", () => {
+    const tituloDe = (nome) =>
+      screen.getAllByRole("columnheader", { name: nome })[0].getAttribute("title");
+
+    it("cada coluna da tabela completa explica o que significa", async () => {
+      const usuario = await abrir();
+      await usuario.click(screen.getByRole("button", { name: "Ver todas as colunas" }));
+
+      expect(tituloDe("Estado")).toMatch(/mesmo estado da UFOP \(Minas Gerais\)/);
+      expect(tituloDe("Região")).toMatch(/mesma Grande Região da UFOP \(Sudeste\)/);
+      expect(tituloDe("Cat. adm.")).toMatch(/mesma categoria da UFOP \(pública federal\)/);
+      expect(tituloDe("Org. acad.")).toMatch(/universidade/);
+      expect(tituloDe("Brasil")).toMatch(/todo o país/);
+    });
+
+    it("gabarito, alternativas e SI também têm explicação", async () => {
+      const usuario = await abrir();
+      await usuario.click(screen.getByRole("button", { name: "Ver todas as colunas" }));
+
+      expect(tituloDe("Gabarito")).toMatch(/Alternativa correta.*Anulada.*Desconsiderada/);
+      expect(tituloDe("C")).toBe("Percentual de concluintes da UFOP que marcaram a alternativa C.");
+      expect(tituloDe("SI")).toMatch(/sem resposta ou marcaram mais de uma/);
+    });
+
+    it("na tabela resumida, o grupo escolhido também explica o que é", async () => {
+      const usuario = await abrir();
+
+      await usuario.selectOptions(
+        screen.getAllByRole("combobox", { name: "Comparar a UFOP com" })[0],
+        "orgAcad",
+      );
+
+      expect(screen.getAllByRole("combobox", { name: "Comparar a UFOP com" })[0]).toHaveAttribute(
+        "title",
+        expect.stringMatching(/universidade/),
+      );
+    });
+  });
+});
