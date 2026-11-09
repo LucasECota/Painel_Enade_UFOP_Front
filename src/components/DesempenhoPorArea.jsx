@@ -17,6 +17,17 @@ const COMPONENTES = [
 const classeDaDiferenca = (ufop, brasil) =>
   ufop > brasil ? "num curso-acima" : ufop < brasil ? "num curso-abaixo" : "num";
 
+// Seta com a diferença da UFOP para o Brasil: ▲ verde (acima) ou ▼ vinho (abaixo), em pontos percentuais
+function Diferenca({ ufop, brasil }) {
+  const dif = Math.round((ufop - brasil) * 10) / 10;
+  if (dif === 0) return <small className="dif-igual">igual ao Brasil</small>;
+  return (
+    <small className={dif > 0 ? "dif-acima" : "dif-abaixo"}>
+      {dif > 0 ? "▲" : "▼"} {formatar(Math.abs(dif))}
+    </small>
+  );
+}
+
 // Botões para escolher entre Formação Geral e Componente Específico
 function SeletorDeComponente({ componente, aoEscolher }) {
   return (
@@ -115,7 +126,10 @@ function Ranking({ titulo, nomeColuna, itens }) {
                 {item.nome}
                 {item.detalhe && <small className="detalhe">{item.detalhe}</small>}
               </td>
-              <td className={classeDaDiferenca(item.ufop, item.brasil)}>{formatar(item.ufop)}</td>
+              <td className={classeDaDiferenca(item.ufop, item.brasil)}>
+                {formatar(item.ufop)}
+                <Diferenca ufop={item.ufop} brasil={item.brasil} />
+              </td>
               <td className="num">{formatar(item.brasil)}</td>
             </tr>
           ))}
@@ -147,13 +161,12 @@ const QUANTIDADES = [3, 5, 10];
 
 // Pergunta 2: em cada edição, as disciplinas ou os temas com mais acertos e com mais erros.
 // O leitor escolhe a edição, o componente, o que ver (disciplinas ou temas) e quantos itens
-// mostrar; nos temas, filtra por disciplina. Mais acertos e mais erros aparecem sempre juntos.
+// mostrar. Mais acertos e mais erros aparecem sempre juntos.
 function MaioresAcertosEErros({ dados }) {
   const [ano, setAno] = useState(null); // nada aparece até o leitor clicar num ano
   const [componente, setComponente] = useState("especifico");
   const [ver, setVer] = useState("disciplinas");
   const [quantos, setQuantos] = useState(5);
-  const [disciplina, setDisciplina] = useState("todas");
   const edicao = dados.porEdicao.find((e) => e.ano === ano);
 
   // mais acertos primeiro
@@ -168,25 +181,21 @@ function MaioresAcertosEErros({ dados }) {
     ufop: a.ufop,
     brasil: a.brasil,
   }));
-  const nomesDasDisciplinas = disciplinas
-    .map((d) => d.nome)
-    .sort((a, b) => a.localeCompare(b, "pt-BR"));
-  // se a disciplina escolhida não existe na edição ou componente atual, volta para "todas"
-  const filtro = nomesDasDisciplinas.includes(disciplina) ? disciplina : "todas";
-  const temas = doComponente(edicao?.temas)
-    .filter((t) => filtro === "todas" || t.disciplina === filtro)
-    .map((t) => ({
-      chave: t.numero,
-      nome: t.tema,
-      detalhe: `${t.disciplina} · questão ${t.numero}`,
-      ufop: t.ufop,
-      brasil: t.brasil,
-    }));
+  const temas = doComponente(edicao?.temas).map((t) => ({
+    chave: t.numero,
+    nome: t.tema,
+    detalhe: `${t.disciplina} · questão ${t.numero}`,
+    ufop: t.ufop,
+    brasil: t.brasil,
+  }));
 
   const itens = ver === "disciplinas" ? disciplinas : temas;
-  // as opções de "Quantos" nunca passam do que existe (a Formação Geral tem poucas disciplinas):
-  // 3, 5 e 10 que couberem e, se o total não for um deles, o próprio total como última opção
-  const opcoesDeQuantidade = [...QUANTIDADES.filter((n) => n < itens.length), itens.length];
+  // Componente Específico: sempre 3, 5 ou 10. Formação Geral tem poucas disciplinas, então as opções
+  // nunca passam do que existe: os 3, 5 e 10 que couberem e, no fim, o próprio total
+  const opcoesDeQuantidade =
+    componente === "especifico"
+      ? QUANTIDADES
+      : [...QUANTIDADES.filter((n) => n < itens.length), itens.length];
   // se a escolha anterior não é mais uma opção (ex.: era o total de outra lista), vale a maior opção que cabe nela
   const mostrar = opcoesDeQuantidade.includes(quantos)
     ? quantos
@@ -230,19 +239,6 @@ function MaioresAcertosEErros({ dados }) {
                 Quantos
                 <select value={mostrar} onChange={(e) => setQuantos(Number(e.target.value))}>
                   {opcoesDeQuantidade.map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-            {ver === "temas" && (
-              <label className="filtro-select">
-                Disciplina
-                <select value={filtro} onChange={(e) => setDisciplina(e.target.value)}>
-                  <option value="todas">Todas</option>
-                  {nomesDasDisciplinas.map((n) => (
                     <option key={n} value={n}>
                       {n}
                     </option>

@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { API_URL } from "../api";
+import Topico from "./Topico";
+import ListaDeRelatorios from "./ListaDeRelatorios";
 
 const formatar = (v) =>
   v === null || v === undefined
@@ -114,6 +116,42 @@ function SeletorDeComparacao({ comparar, aoComparar }) {
         </option>
       ))}
     </select>
+  );
+}
+
+// Caixa fechada com os relatórios de curso do INEP para baixar (uma linha por edição com tabela).
+// Os tamanhos vêm da API; se ela não responder, a lista aparece igual, só sem o tamanho.
+function RelatoriosParaBaixar({ chave, anos }) {
+  const [daApi, setDaApi] = useState([]);
+
+  useEffect(() => {
+    let cancelado = false;
+    fetch(`${API_URL}/relatorios/curso`)
+      .then((r) => r.json())
+      .then((lista) => {
+        if (!cancelado && Array.isArray(lista)) setDaApi(lista.filter((r) => r.curso === chave));
+      })
+      .catch(() => {});
+    return () => {
+      cancelado = true;
+    };
+  }, [chave]);
+
+  const itens = anos.map((ano) => {
+    const r = daApi.find((x) => x.ano === ano);
+    return {
+      chave: ano,
+      titulo: r?.titulo ?? `Enade ${ano} — Relatório de curso`,
+      descricao: r?.descricao ?? "UFOP, campus João Monlevade",
+      tamanhoMb: r?.tamanhoMb,
+      href: `${API_URL}/relatorios/curso/${chave}/${ano}/download`,
+    };
+  });
+
+  return (
+    <Topico titulo="Relatórios do INEP para baixar">
+      <ListaDeRelatorios nome="Relatórios de curso" itens={itens} />
+    </Topico>
   );
 }
 
@@ -354,12 +392,6 @@ function TabelaQuestoes({ chave, anos }) {
                 <SeletorDeComparacao comparar={comparar} aoComparar={setComparar} />
               </label>
             )}
-            <a
-              className="btn btn-link"
-              href={`${API_URL}/relatorios/curso/${chave}/${dados.ano}/download`}
-            >
-              Baixar relatório do INEP (PDF)
-            </a>
           </div>
 
           {dados.componentes.map((componente) => (
@@ -389,6 +421,8 @@ function TabelaQuestoes({ chave, anos }) {
           <p className="nota">Fonte: {dados.fonte}.</p>
         </div>
       )}
+
+      <RelatoriosParaBaixar chave={chave} anos={anos} />
     </div>
   );
 }

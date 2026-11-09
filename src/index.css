@@ -1925,7 +1925,24 @@ tbody tr:nth-child(even) {
 
 .grafico-rolavel {
   overflow-x: auto;
+  padding-bottom: 6px;
 }
+
+/* barra de rolagem sempre visível (no celular a padrão some): indica que o gráfico se move para o lado */
+.grafico-rolavel::-webkit-scrollbar {
+  height: 10px;
+}
+
+.grafico-rolavel::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 5px;
+}
+
+.grafico-rolavel::-webkit-scrollbar-thumb {
+  background: var(--vinho);
+  border-radius: 5px;
+}
+
 
 .grafico-svg {
   display: block;
@@ -2053,4 +2070,32 @@ tbody tr:nth-child(even) {
     padding: 10px 12px;
     font-size: 16px;
   }
+}
+
+/* seta da diferença abaixo do acerto da UFOP, nas listas de mais acertos e erros */
+.ranking td small.dif-acima,
+.ranking td small.dif-abaixo,
+.ranking td small.dif-igual {
+  display: block;
+  font-weight: 400;
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+
+/* relatórios do INEP para baixar, no fim da área do curso */
+.relatorios-do-curso {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--borda);
+}
+
+.relatorios-do-curso h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.relatorios-do-curso .btn-link {
+  margin: 0 8px 8px 0;
+  padding: 6px 14px;
+  font-size: 14px;
 }

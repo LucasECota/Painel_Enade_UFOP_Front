@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Topico from "../components/Topico";
+import ListaDeRelatorios from "../components/ListaDeRelatorios";
 import { API_URL } from "../api";
 
 const formatar = (n) =>
@@ -43,29 +44,6 @@ function Barras({ curso, brasil, sufixo = "" }) {
 
 // Cursos cujos relatórios de curso não são oferecidos para baixar nesta página
 const CURSOS_SEM_RELATORIO_DE_CURSO = ["ec"];
-
-// Lista de relatórios com o botão de baixar; sem itens, avisa que não há relatório.
-function ListaDeRelatorios({ nome, itens }) {
-  if (itens.length === 0) return <p className="nota">Nenhum relatório disponível.</p>;
-
-  return (
-    <ul className="relatorios" aria-label={nome}>
-      {itens.map((r) => (
-        <li key={r.chave}>
-          <div>
-            <strong>{r.titulo}</strong>
-            <small>
-              {r.descricao} · PDF, {formatar(r.tamanhoMb)} MB
-            </small>
-          </div>
-          <a className="btn btn-link" href={r.href}>
-            Baixar PDF
-          </a>
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 function Resultados() {
   const [dados, setDados] = useState(null);

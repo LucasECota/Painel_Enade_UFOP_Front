@@ -74,18 +74,31 @@ describe("TabelaQuestoes", () => {
     ).toBeInTheDocument();
   });
 
-  it("tem um link para baixar o relatório do curso e do ano que está na tabela", async () => {
-    simularApi({ "/enade/ec/questoes": tabela(2017) });
-    render(<TabelaQuestoes chave="ec" anos={[2017]} />);
-    await abrirAno(2017);
+  it("os relatórios para baixar ficam numa caixa fechada, uma linha por edição, com o tamanho", async () => {
+    simularApi({
+      "/relatorios/curso": [
+        {
+          curso: "ec",
+          ano: 2017,
+          titulo: "Enade 2017 — Relatório do curso",
+          descricao: "UFOP",
+          tamanhoMb: 1.1,
+        },
+        { curso: "si", ano: 2017, titulo: "Outro curso", descricao: "UFOP", tamanhoMb: 9 },
+      ],
+      "/enade/ec/questoes": tabela(2017),
+    });
+    render(<TabelaQuestoes chave="ec" anos={[2017, 2014]} />);
 
-    const link = await screen.findByRole("link", { name: "Baixar relatório do INEP (PDF)" });
-    expect(link).toHaveAttribute("href", `${API_URL}/relatorios/curso/ec/2017/download`);
-    // fica em cima das tabelas, antes de qualquer uma
-    const primeiraTabela = document.querySelector("table");
-    expect(
-      link.compareDocumentPosition(primeiraTabela) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    const caixa = screen.getByText("Relatórios do INEP para baixar").closest("details");
+    expect(caixa).not.toHaveAttribute("open"); // começa fechada
+    expect(await within(caixa).findByText(/PDF, 1,1 MB/)).toBeInTheDocument();
+    const links = within(caixa).getAllByRole("link", { name: "Baixar PDF" });
+    expect(links.map((l) => l.getAttribute("href"))).toEqual([
+      `${API_URL}/relatorios/curso/ec/2017/download`,
+      `${API_URL}/relatorios/curso/ec/2014/download`, // sem dados da API: lista igual, sem tamanho
+    ]);
+    expect(screen.queryByText("Outro curso")).toBeNull();
   });
 
   it("busca a tabela do curso e do ano clicado", async () => {
@@ -247,7 +260,8 @@ describe("TabelaQuestoes", () => {
     expect(screen.getByRole("button", { name: "2023" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "2019" })).toBeInTheDocument();
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
-    expect(fetchFalso).not.toHaveBeenCalled();
+    // nenhuma tabela é buscada antes do clique (só a lista de relatórios, para a caixa de downloads)
+    expect(fetchFalso).not.toHaveBeenCalledWith(expect.stringContaining("/enade/"));
   });
 
   it("com um ano só, o botão do ano também aparece e a tabela espera o clique", async () => {
@@ -281,7 +295,8 @@ describe("TabelaQuestoes", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn((url) => {
-        const ano = String(url).match(/\?ano=(\d+)/)[1];
+        const ano = String(url).match(/\?ano=(\d+)/)?.[1];
+        if (!ano) return Promise.reject(new Error("só a tabela é controlada aqui"));
         return new Promise((resolve) => {
           pendentes[ano] = () =>
             resolve({ ok: true, json: () => Promise.resolve(tabela(Number(ano))) });

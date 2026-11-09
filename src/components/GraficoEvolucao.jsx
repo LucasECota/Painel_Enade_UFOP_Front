@@ -54,6 +54,7 @@ export default function GraficoEvolucao({ linhas, edicoes, componente }) {
         </li>
       </ul>
 
+      <p className="dica-rolagem">Deslize o gráfico para o lado para ver todas as edições.</p>
       <div className="grafico-rolavel">
         <svg
           className="grafico-svg"

@@ -186,13 +186,14 @@ describe("DesempenhoPorArea", () => {
       await clicar("Temas");
       const quantos = screen.getByRole("combobox", { name: "Quantos" });
 
-      expect(quantos).toHaveValue("3"); // o padrão (5) não cabe: vale o total de temas
-      expect(nomes(MAIS_ACERTOS_T)).toHaveLength(3);
+      expect(quantos).toHaveValue("5"); // padrão
       await usuario.selectOptions(quantos, "3");
-      expect(nomes(MAIS_ACERTOS_T)).toHaveLength(3);
+      expect(nomes(MAIS_ACERTOS_T)).toHaveLength(3); // a edição só tem 3 temas
+      await usuario.selectOptions(quantos, "10");
+      expect(nomes(MAIS_ACERTOS_T)).toHaveLength(3); // não passa do que existe
     });
 
-    it("as opções de 'Quantos' nunca passam do que existe (Formação Geral tem poucas disciplinas)", async () => {
+    it("no Componente Específico 'Quantos' oferece só 3, 5 e 10; na Formação Geral, nunca mais do que existe", async () => {
       await renderizar("rankings");
       await abrirEdicao(2023);
       const opcoes = () =>
@@ -200,44 +201,12 @@ describe("DesempenhoPorArea", () => {
           .getAllByRole("option")
           .map((o) => o.textContent);
 
-      expect(opcoes()).toEqual(["2"]); // 2 disciplinas no Componente Específico de 2023
+      expect(opcoes()).toEqual(["3", "5", "10"]);
       await clicar("Temas");
-      expect(opcoes()).toEqual(["3"]); // 3 temas
+      expect(opcoes()).toEqual(["3", "5", "10"]);
       await clicar("Formação Geral");
       await clicar("Disciplinas");
       expect(opcoes()).toEqual(["1"]); // só Sociologia
-    });
-
-    it("limita a lista ao número escolhido", async () => {
-      const usuario = userEvent.setup();
-      await renderizar("rankings");
-      await abrirEdicao(2023);
-      await clicar("Temas");
-      await usuario.selectOptions(screen.getByRole("combobox", { name: "Quantos" }), "3");
-      expect(nomes(MAIS_ACERTOS_T)).toHaveLength(3);
-      // 1 só (ao filtrar por disciplina) vira uma linha
-      await usuario.selectOptions(
-        screen.getByRole("combobox", { name: "Disciplina" }),
-        "Circuitos Elétricos I",
-      );
-      expect(nomes(MAIS_ACERTOS_T)).toEqual([expect.stringMatching(/^Kirchhoff/)]);
-    });
-
-    it("nos temas, dá para filtrar por disciplina; em disciplinas esse filtro não existe", async () => {
-      const usuario = userEvent.setup();
-      await renderizar("rankings");
-      await abrirEdicao(2023);
-      expect(screen.queryByRole("combobox", { name: "Disciplina" })).toBeNull();
-
-      await clicar("Temas");
-      await usuario.selectOptions(
-        screen.getByRole("combobox", { name: "Disciplina" }),
-        "Redes de Computadores I",
-      );
-      expect(nomes(MAIS_ACERTOS_T)).toEqual([
-        expect.stringMatching(/^OSPF/),
-        expect.stringMatching(/^TCP/),
-      ]);
     });
 
     it("as listas de erros mostram os acertos da UFOP e do Brasil (a pior disciplina ou tema primeiro)", async () => {
@@ -250,6 +219,19 @@ describe("DesempenhoPorArea", () => {
       expect(celulas).toHaveLength(3);
       expect(celulas[1]).toHaveTextContent("20,0"); // acerto da UFOP
       expect(celulas[2]).toHaveTextContent("30,0"); // acerto do Brasil
+    });
+
+    it("a seta mostra a diferença da UFOP para o Brasil: verde acima, vinho abaixo, e 'igual'", async () => {
+      await renderizar("rankings");
+      await abrirEdicao(2023);
+      const linhas = within(lista(MAIS_ACERTOS_D)).getAllByRole("row").slice(1);
+      expect(linhas[0]).toHaveTextContent("60,0▲ 10,0"); // Redes: 60 contra 50
+      expect(linhas[1]).toHaveTextContent("20,0▼ 10,0"); // Circuitos: 20 contra 30
+      expect(within(linhas[0]).getByText("▲ 10,0")).toHaveClass("dif-acima");
+      expect(within(linhas[1]).getByText("▼ 10,0")).toHaveClass("dif-abaixo");
+
+      await clicar("Formação Geral");
+      expect(screen.getAllByText("igual ao Brasil").length).toBeGreaterThan(0); // Sociologia: 70 e 70
     });
 
     it("os cabeçalhos mostram só acertos, nunca colunas de erros", async () => {
