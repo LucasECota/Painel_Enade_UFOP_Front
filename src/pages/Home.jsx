@@ -6,7 +6,7 @@ const atalhos = [
     to: "/preparatorio",
     titulo: "Preparatório Enade 2026",
     texto:
-      "Cursos de preparação do AvaliaUFOP para Eng. de Computação, Eng. de Produção e Sistemas de Informação, e o desempenho dos alunos.",
+      "Cursos de preparação do AvaliaUFOP para Engenharia de Computação, Engenharia de Produção e Sistemas de Informação, e o desempenho dos alunos.",
   },
   {
     to: "/dados",

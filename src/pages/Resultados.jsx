@@ -42,13 +42,9 @@ function Barras({ curso, brasil, sufixo = "" }) {
   );
 }
 
-// Cursos cujos relatórios de curso não são oferecidos para baixar nesta página
-const CURSOS_SEM_RELATORIO_DE_CURSO = ["ec"];
-
 function Resultados() {
   const [dados, setDados] = useState(null);
   const [relatorios, setRelatorios] = useState([]);
-  const [relatoriosDeCurso, setRelatoriosDeCurso] = useState([]);
   const [erro, setErro] = useState(false);
   const [chave, setChave] = useState("ec");
 
@@ -56,15 +52,10 @@ function Resultados() {
     Promise.all([
       fetch(`${API_URL}/resultados`).then((r) => r.json()),
       fetch(`${API_URL}/relatorios`).then((r) => r.json()),
-      // os relatórios de curso são um extra: se falharem, o resto da página continua
-      fetch(`${API_URL}/relatorios/curso`)
-        .then((r) => r.json())
-        .catch(() => []),
     ])
-      .then(([resultados, lista, listaDeCurso]) => {
+      .then(([resultados, lista]) => {
         setDados(resultados);
         setRelatorios(lista);
-        setRelatoriosDeCurso(listaDeCurso);
       })
       .catch(() => setErro(true));
   }, []);
@@ -111,7 +102,12 @@ function Resultados() {
             ))}
           </div>
 
-          <Topico titulo="Conceito Enade em cada edição">
+          <Topico titulo="Conceito Enade em cada edição" aberto>
+            <p>
+              Segundo o INEP, as notas do Enade não são comparáveis entre edições, porque a prova
+              muda a cada ano. Aqui você encontra os dados de cada uma para fazer a sua própria
+              análise.
+            </p>
             <div className="conceitos">
               {curso.edicoes.map((e) => (
                 <div className="conceito-col" key={e.ano}>
@@ -129,7 +125,7 @@ function Resultados() {
             </div>
           </Topico>
 
-          <Topico titulo={`Comparação com o Brasil — Enade ${curso.comparacao.ano}`}>
+          <Topico titulo={`Comparação com o Brasil — Enade ${curso.comparacao.ano}`} aberto>
             <p>Média dos concluintes na prova, em uma escala de 0 a 100.</p>
             <div className="comparacoes">
               {comparacoes.map((c) => (
@@ -144,7 +140,7 @@ function Resultados() {
             </div>
           </Topico>
 
-          <Topico titulo={`Perfil dos concluintes — Enade ${curso.perfil.ano}`}>
+          <Topico titulo={`Perfil dos concluintes — Enade ${curso.perfil.ano}`} aberto>
             <p>
               Entre os {curso.perfil.presentes} concluintes que fizeram a prova, esta é a
               porcentagem em cada situação, comparada com o Brasil.
@@ -165,8 +161,9 @@ function Resultados() {
             <p>
               Relatórios oficiais de cada edição do Enade (UFOP, campus João Monlevade). IES
               significa Instituição de Educação Superior: o relatório da IES reúne os resultados de
-              todos os cursos avaliados da UFOP em João Monlevade, e o relatório de curso traz os
-              resultados de um curso só, com o percentual de acerto de cada questão.
+              todos os cursos avaliados da UFOP em João Monlevade. Os relatórios de cada curso, com
+              o percentual de acerto de cada questão, ficam em "Análise das provas", em Acertos por
+              questão.
             </p>
 
             <h3>Relatórios da IES (todos os cursos)</h3>
@@ -180,24 +177,6 @@ function Resultados() {
                 href: `${API_URL}/relatorios/${r.ano}/download`,
               }))}
             />
-
-            {!CURSOS_SEM_RELATORIO_DE_CURSO.includes(chave) && (
-              <>
-                <h3>Relatórios de curso — {curso.nome}</h3>
-                <ListaDeRelatorios
-                  nome="Relatórios de curso"
-                  itens={relatoriosDeCurso
-                    .filter((r) => r.curso === chave)
-                    .map((r) => ({
-                      chave: r.ano,
-                      titulo: r.titulo,
-                      descricao: r.descricao,
-                      tamanhoMb: r.tamanhoMb,
-                      href: `${API_URL}/relatorios/curso/${r.curso}/${r.ano}/download`,
-                    }))}
-                />
-              </>
-            )}
           </Topico>
 
           <p className="nota">

@@ -268,7 +268,7 @@ function Edicoes() {
       <h2>Edições do Enade</h2>
       <p>
         Escolha um curso para ver o que o Enade cobrou em cada disciplina e como os concluintes se
-        saíram em cada questão, ajudando a direcionar os estudos.
+        saíram em cada questão.
       </p>
 
       <div className="card-grid">

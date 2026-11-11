@@ -64,18 +64,32 @@ describe("VerQuestao", () => {
     expect(screen.queryByText(/Gabarito|gabarito/)).toBeNull();
   });
 
-  it("explica quando a questão foi anulada ou desconsiderada", async () => {
+  it("questão anulada não tem gabarito, e o aviso explica", async () => {
+    const usuario = userEvent.setup();
+    render(<VerQuestao questao={{ ...objetiva, gabarito: null, situacao: "anulada" }} />);
+    await usuario.click(screen.getByRole("button", { name: "Ver questão" }));
+
+    expect(screen.getByText(/anulada pela comissão/)).toBeInTheDocument();
+    expect(screen.queryByText(/Gabarito:/)).toBeNull();
+  });
+
+  it("questão desconsiderada mostra o gabarito da prova, com o aviso de que ficou fora do cálculo", async () => {
     const usuario = userEvent.setup();
     const { unmount } = render(
-      <VerQuestao questao={{ ...objetiva, gabarito: null, situacao: "anulada" }} />,
+      <VerQuestao questao={{ ...objetiva, gabarito: "E", situacao: "desconsiderada" }} />,
     );
     await usuario.click(screen.getByRole("button", { name: "Ver questão" }));
-    expect(screen.getByText(/anulada pela comissão/)).toBeInTheDocument();
+    expect(
+      screen.getByText("Gabarito: E (questão desconsiderada no cálculo da nota)"),
+    ).toBeInTheDocument();
     unmount();
 
+    // sem gabarito conhecido, avisa que não há
     render(<VerQuestao questao={{ ...objetiva, gabarito: null, situacao: "desconsiderada" }} />);
     await usuario.click(screen.getByRole("button", { name: "Ver questão" }));
-    expect(screen.getByText(/desconsiderada no cálculo/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/desconsiderada no cálculo da nota: sem gabarito oficial/),
+    ).toBeInTheDocument();
   });
 
   it("avisa quando a imagem não carrega", async () => {

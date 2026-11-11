@@ -5,12 +5,14 @@ import { limparCacheDoDesempenho } from "../desempenhoCache";
 import { simularApi } from "../test/api";
 import DesempenhoPorArea from "./DesempenhoPorArea";
 
-const area = (componente, disciplina, questoes, ufop, brasil) => ({
+// cada disciplina traz a lista das suas questões (número, tema, gabarito e imagem), como a API manda
+const area = (componente, disciplina, questoes, ufop, brasil, lista = []) => ({
   componente,
   disciplina,
   questoes,
   ufop,
   brasil,
+  lista,
 });
 const tema = (componente, numero, disciplina, texto, ufop, brasil) => ({
   componente,
@@ -19,6 +21,14 @@ const tema = (componente, numero, disciplina, texto, ufop, brasil) => ({
   tema: texto,
   ufop,
   brasil,
+  gabarito: "C",
+  imagem: `2023/ec-${numero}.webp`,
+});
+const itemDaLista = (numero, texto, gabarito) => ({
+  numero,
+  tema: texto,
+  gabarito,
+  imagem: `2023/ec-${numero}.webp`,
 });
 
 const dados = {
@@ -29,8 +39,11 @@ const dados = {
     {
       ano: 2023,
       areas: [
-        area("especifico", "Redes de Computadores I", 2, 60, 50),
-        area("especifico", "Circuitos Elétricos I", 1, 20, 30),
+        area("especifico", "Redes de Computadores I", 2, 60, 50, [
+          itemDaLista(11, "OSPF", "C"),
+          itemDaLista(12, "TCP", "A"),
+        ]),
+        area("especifico", "Circuitos Elétricos I", 1, 20, 30, [itemDaLista(13, "Kirchhoff", "B")]),
         area("formacaoGeral", "Sociologia", 1, 70, 70),
       ],
       temas: [
@@ -232,6 +245,40 @@ describe("DesempenhoPorArea", () => {
 
       await clicar("Formação Geral");
       expect(screen.getAllByText("igual ao Brasil").length).toBeGreaterThan(0); // Sociologia: 70 e 70
+    });
+
+    it("cada linha tem um botão para ver a questão (ou as questões, se a disciplina tem mais de uma)", async () => {
+      const usuario = userEvent.setup();
+      await renderizar("rankings");
+      await abrirEdicao(2023);
+
+      // Redes tem duas questões: o botão mostra as duas, com o gabarito de cada uma
+      const redes = within(lista(MAIS_ACERTOS_D))
+        .getByText("Redes de Computadores I")
+        .closest("tr");
+      await usuario.click(within(redes).getByRole("button", { name: "Ver questões" }));
+      const janela = within(screen.getByRole("dialog", { name: "Redes de Computadores I" }));
+      expect(janela.getAllByRole("img")).toHaveLength(2);
+      expect(janela.getByRole("img", { name: /Questão 11: OSPF/ })).toBeInTheDocument();
+      expect(janela.getByRole("img", { name: /Questão 12: TCP/ })).toBeInTheDocument();
+      expect(janela.getByText("Gabarito: C")).toBeInTheDocument();
+      expect(janela.getByText("Gabarito: A")).toBeInTheDocument();
+      await usuario.keyboard("{Escape}");
+
+      // Circuitos tem uma só
+      const circuitos = within(lista(MAIS_ACERTOS_D))
+        .getByText("Circuitos Elétricos I")
+        .closest("tr");
+      await usuario.click(within(circuitos).getByRole("button", { name: "Ver questão" }));
+      expect(screen.getByRole("dialog", { name: /Questão 13/ })).toBeInTheDocument();
+      expect(screen.getByText("Gabarito: B")).toBeInTheDocument();
+      await usuario.keyboard("{Escape}");
+
+      // nos temas, cada linha é uma questão
+      await clicar("Temas");
+      const ospf = within(lista(MAIS_ACERTOS_T)).getByText("OSPF").closest("tr");
+      await usuario.click(within(ospf).getByRole("button", { name: "Ver questão" }));
+      expect(screen.getByRole("dialog", { name: /Questão 11/ })).toBeInTheDocument();
     });
 
     it("os cabeçalhos mostram só acertos, nunca colunas de erros", async () => {

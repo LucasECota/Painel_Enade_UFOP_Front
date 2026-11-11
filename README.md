@@ -45,21 +45,29 @@ linha tracejada marcando os 60% exigidos para o certificado. Os dados vêm de ex
 
 <img src="docs/screenshots/03-desempenho.png" alt="Painel de desempenho dos alunos no AvaliaUFOP" width="860">
 
-### Dados Edições Anteriores — aba O que o Enade cobrou
-O que o Enade cobrou em cada edição (2014 em diante): quantas questões por disciplina e quais
-assuntos, para direcionar os estudos, o botão **Ver questão** (imagem da prova e gabarito) e a tabela de **acertos por questão** do Relatório de Curso do
-INEP, com a disciplina e o tema de cada uma, além de duas análises feitas
-a partir dessas tabelas: a **evolução de cada disciplina** ao longo das edições (UFOP comparada com o
-Brasil na mesma edição) e as **disciplinas e temas com mais acertos e mais erros** em cada edição, para
-Formação Geral e Componente Específico. Cada uma é um subtópico clicável; cada disciplina
-abre e fecha para não sobrecarregar a leitura.
+### Dados Edições Anteriores — aba Análise das provas
+O que o Enade cobrou em cada edição (2014 em diante), em quatro subtópicos:
+
+- **Assuntos por disciplina:** quantas questões (objetivas e discursivas) cada disciplina teve e quais
+  foram os assuntos, para Formação Geral e Componente Específico. Cada assunto tem o botão
+  **Ver questão**, que abre a imagem da questão como na prova, com o gabarito (nas discursivas, só o
+  enunciado; nas anuladas, sem gabarito; nas desconsideradas, o gabarito com o aviso).
+- **Acertos por questão:** tabela do Relatório de Curso do INEP com o percentual de acerto da UFOP e
+  de outros grupos (Brasil, estado, região...), a disciplina, o tema e o gabarito de cada questão, e
+  uma tabela só com as **questões discursivas** e a nota média. Cada tabela tem a sua ordenação e o seu
+  grupo de comparação, e abre e fecha. Os relatórios do INEP ficam para baixar numa caixa no fim.
+- **Evolução por disciplina:** gráfico de barras com o acerto da UFOP e do Brasil em cada edição para
+  a disciplina escolhida (menu em subgrupos de disciplinas parecidas).
+- **Mais acertos e erros:** disciplinas ou temas com mais acertos e mais erros em cada edição, com a
+  escolha de quantos mostrar (3, 5 ou 10) e o botão para ver as questões de cada linha.
 
 <img src="docs/screenshots/04-edicoes.png" alt="Disciplinas e assuntos do Enade 2023 de Engenharia de Computação" width="860">
 
 ### Dados Edições Anteriores — aba Resultados dos cursos
-Conceito Enade de cada edição, comparação das médias do ICEA com as do Brasil (Formação Geral
-e Componente Específico), perfil socioeconômico dos concluintes e os **relatórios oficiais do INEP
-para baixar**. Os blocos são expansíveis.
+Conceito Enade de cada edição (com o aviso do INEP de que as notas não são comparáveis entre
+edições), comparação das médias do ICEA com as do Brasil (Formação Geral e Componente Específico),
+perfil socioeconômico dos concluintes e os **relatórios da IES** para baixar. Os blocos de dados já
+abrem abertos e podem ser escondidos.
 
 <img src="docs/screenshots/05-resultados-conceito.png" alt="Conceito Enade dos cursos do ICEA e comparação com o Brasil" width="860">
 
@@ -80,9 +88,12 @@ Todas as telas foram pensadas para telas pequenas, com menu recolhido e gráfico
 ## Destaques técnicos
 
 - **Gráficos feitos à mão, sem biblioteca.** As barras, as colunas e a linha dos 60% são React e CSS
-  puros. A linha tracejada é um único elemento posicionado por variáveis CSS, que atravessa todas as
-  barras e se adapta ao layout de computador e de celular.
-- **Testes automatizados:** 100 testes no front (Vitest + Testing Library) e 237 na API. Cobrem os
+  puros, e o gráfico de evolução por disciplina é um SVG. A linha tracejada é um único elemento
+  posicionado por variáveis CSS, que atravessa todas as barras e se adapta ao layout de computador e
+  de celular.
+- **Questões da prova na tela:** as imagens das questões (recortes dos cadernos de prova) são servidas
+  pela API e abertas numa janela acessível (foco, Esc e clique fora para fechar).
+- **Testes automatizados:** 168 testes no front (Vitest + Testing Library) e 247 na API. Cobrem os
   dados exibidos, a troca de curso, os links, os estados de erro e a integridade dos números copiados
   dos relatórios do INEP.
 - **Integração contínua** no GitHub Actions (lint, testes, build e auditoria de segurança) e
@@ -162,8 +173,9 @@ redirecionamento das rotas já está em `public/_redirects` (hospedagens estáti
 Usam [Vitest](https://vitest.dev) + Testing Library, ao lado do código (`*.test.jsx`). A API é
 simulada em `src/test/api.js`, então os testes não precisam do backend no ar.
 
-Cobrem o menu, os tópicos expansíveis e as páginas Início, AvaliaUFOP, Edições, Desempenho e
-Resultados (dados exibidos, troca de curso, links e erros da API).
+Cobrem o menu, as páginas com abas, os tópicos expansíveis e as páginas Início, Preparatório, Dados
+Edições Anteriores (Análise das provas e Resultados): dados exibidos, troca de curso, ordenação e
+comparação das tabelas, janela de ver questão, filtros dos rankings, links e erros da API.
 
 O que os testes **não** cobrem é o visual (posição da linha dos 60%, cores, espaçamentos): o jsdom
 não calcula layout. Isso é conferido abrindo a página no navegador. As imagens deste README foram
@@ -187,9 +199,15 @@ src/
 ├── App.jsx                rotas
 ├── components/
 │   ├── DesempenhoPorArea.jsx  evolução por disciplina e rankings de acertos e erros
+│   ├── GraficoEvolucao.jsx    gráfico de barras da evolução (SVG)
 │   ├── Layout.jsx         cabeçalho, menu e rodapé
+│   ├── ListaDeRelatorios.jsx  lista de relatórios do INEP para baixar
 │   ├── PaginaComAbas.jsx  página com abas (a aba vai para o endereço, ?aba=)
+│   ├── QuestaoModal.jsx   botão e janela "Ver questão" (imagem e gabarito)
+│   ├── TabelaQuestoes.jsx tabelas de acertos por questão e de discursivas
 │   └── Topico.jsx         seção que abre e fecha
+├── gruposDeDisciplinas.js subgrupos de disciplinas do menu da evolução
+├── desempenhoCache.js     guarda os dados do desempenho entre as abas
 ├── data/avaliaufop.js     cursos, módulos e links do Moodle
 ├── pages/                 Início, Preparatório Enade 2026 e Dados Edições Anteriores (cada uma com abas)
 ├── test/                  utilitários dos testes (API simulada)

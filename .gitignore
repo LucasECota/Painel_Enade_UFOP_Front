@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Arquivos que ficam só no meu computador (não sobem para o GitHub)
+docs/apresentacao/
+docs/screenshots/moodle.png
+docs/screenshots/questao moodle.png
+~$*

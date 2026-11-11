@@ -18,12 +18,8 @@ describe("Dados Edições Anteriores", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Dados Edições Anteriores" }),
     ).toBeInTheDocument();
-    const frase = screen.getByText(
-      /Segundo o INEP, as notas do Enade não são comparáveis entre edições/,
-    );
-    expect(frase).toHaveTextContent(
-      "Aqui você encontra os dados de cada uma para fazer a sua própria análise",
-    );
+    // a frase sobre as notas não serem comparáveis agora fica só na caixa do Conceito Enade
+    expect(screen.queryByText(/Segundo o INEP, as notas do Enade/)).not.toBeInTheDocument();
   });
 
   it("tem as abas Edições e Resultados", () => {
@@ -34,7 +30,7 @@ describe("Dados Edições Anteriores", () => {
     );
 
     expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual([
-      "O que o Enade cobrou",
+      "Análise das provas",
       "Resultados dos cursos",
     ]);
   });

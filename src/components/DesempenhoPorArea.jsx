@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import GraficoEvolucao from "./GraficoEvolucao";
+import VerQuestao from "./QuestaoModal";
 import { cache, carregarDesempenho } from "../desempenhoCache";
 
 const formatar = (v) =>
@@ -124,7 +125,10 @@ function Ranking({ titulo, nomeColuna, itens }) {
             <tr key={item.chave}>
               <td>
                 {item.nome}
-                {item.detalhe && <small className="detalhe">{item.detalhe}</small>}
+                <div className={item.titulo ? "ranking-nome ranking-nome-curto" : "ranking-nome"}>
+                  {item.detalhe && <small className="detalhe">{item.detalhe}</small>}
+                  <VerQuestao questoes={item.questoes} titulo={item.titulo} />
+                </div>
               </td>
               <td className={classeDaDiferenca(item.ufop, item.brasil)}>
                 {formatar(item.ufop)}
@@ -159,6 +163,16 @@ function Escolha({ rotulo, opcoes, valor, aoEscolher }) {
 
 const QUANTIDADES = [3, 5, 10];
 
+// questão do ranking no formato do botão "Ver questão" (todas são objetivas e válidas)
+const questaoDoRanking = (q) => ({
+  id: String(q.numero),
+  tipo: "objetiva",
+  tema: q.tema,
+  gabarito: q.gabarito,
+  situacao: "valida",
+  imagem: q.imagem,
+});
+
 // Pergunta 2: em cada edição, as disciplinas ou os temas com mais acertos e com mais erros.
 // O leitor escolhe a edição, o componente, o que ver (disciplinas ou temas) e quantos itens
 // mostrar. Mais acertos e mais erros aparecem sempre juntos.
@@ -180,6 +194,9 @@ function MaioresAcertosEErros({ dados }) {
     detalhe: `${a.questoes} ${a.questoes === 1 ? "questão" : "questões"}`,
     ufop: a.ufop,
     brasil: a.brasil,
+    // todas as questões da disciplina (imagem e gabarito), em ordem de número
+    titulo: a.disciplina,
+    questoes: (a.lista ?? []).map((q) => ({ ...questaoDoRanking(q), tema: q.tema })),
   }));
   const temas = doComponente(edicao?.temas).map((t) => ({
     chave: t.numero,
@@ -187,6 +204,7 @@ function MaioresAcertosEErros({ dados }) {
     detalhe: `${t.disciplina} · questão ${t.numero}`,
     ufop: t.ufop,
     brasil: t.brasil,
+    questoes: [questaoDoRanking(t)],
   }));
 
   const itens = ver === "disciplinas" ? disciplinas : temas;

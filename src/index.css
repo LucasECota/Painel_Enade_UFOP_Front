@@ -1943,7 +1943,6 @@ tbody tr:nth-child(even) {
   border-radius: 5px;
 }
 
-
 .grafico-svg {
   display: block;
   min-width: 480px;
@@ -2098,4 +2097,77 @@ tbody tr:nth-child(even) {
   margin: 0 8px 8px 0;
   padding: 6px 14px;
   font-size: 14px;
+}
+
+/* botão "Ver questão" ao lado do nome, nas listas de mais acertos e erros */
+.ranking-nome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin-top: 2px;
+}
+
+.ranking-nome .ver-questao {
+  white-space: nowrap;
+}
+
+/* várias questões na mesma janela */
+.questao-bloco + .questao-bloco {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 2px solid var(--borda);
+}
+
+.questao-bloco h4 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  color: var(--vinho);
+}
+
+.questao-bloco h4 span {
+  font-weight: 400;
+  color: #4b5563;
+}
+
+.questao-gabarito-bloco {
+  margin: 10px 0 0;
+  border-radius: 4px;
+  border-top: 0;
+}
+
+/* "Ver questão" e "Ver questões" com a mesma largura, justa ao texto */
+.ver-questao {
+  box-sizing: border-box;
+  width: 6.4rem;
+  padding-left: 4px;
+  padding-right: 4px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* disciplinas: "1 questão" e "2 questões" ocupam o mesmo espaço, e os botões ficam alinhados */
+.ranking-nome-curto .detalhe {
+  flex: none;
+  width: 4.6rem;
+}
+
+/* temas: o detalhe (disciplina · questão) fica numa linha, e o botão embaixo, alinhado à esquerda */
+.ranking-nome:not(.ranking-nome-curto) .detalhe {
+  flex-basis: 100%;
+}
+
+/* número da questão com o botão "Ver" ao lado, na tabela de acertos */
+.numero-e-botao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.ver-questao.ver-questao-compacto {
+  width: auto;
+  min-width: 0;
+  padding: 1px 8px;
+  font-size: 0.75rem;
 }
