@@ -52,16 +52,29 @@ O que o Enade cobrou em cada edição (2014 em diante), em quatro subtópicos:
   foram os assuntos, para Formação Geral e Componente Específico. Cada assunto tem o botão
   **Ver questão**, que abre a imagem da questão como na prova, com o gabarito (nas discursivas, só o
   enunciado; nas anuladas, sem gabarito; nas desconsideradas, o gabarito com o aviso).
+
+  <img src="docs/screenshots/04-edicoes.png" alt="Disciplinas e assuntos do Enade 2023 de Engenharia de Computação, com o botão Ver questão" width="860">
+
+  <img src="docs/screenshots/10-ver-questao.png" alt="Janela com a imagem da questão e o gabarito" width="860">
+
 - **Acertos por questão:** tabela do Relatório de Curso do INEP com o percentual de acerto da UFOP e
   de outros grupos (Brasil, estado, região...), a disciplina, o tema e o gabarito de cada questão, e
   uma tabela só com as **questões discursivas** e a nota média. Cada tabela tem a sua ordenação e o seu
   grupo de comparação, e abre e fecha. Os relatórios do INEP ficam para baixar numa caixa no fim.
+
+  <img src="docs/screenshots/07-acertos-por-questao.png" alt="Tabelas de acertos por questão do Enade 2023" width="860">
+
+  <img src="docs/screenshots/11-discursivas.png" alt="Tabela das questões discursivas com a nota média da UFOP e do Brasil" width="860">
+
 - **Evolução por disciplina:** gráfico de barras com o acerto da UFOP e do Brasil em cada edição para
   a disciplina escolhida (menu em subgrupos de disciplinas parecidas).
+
+  <img src="docs/screenshots/08-evolucao.png" alt="Gráfico de evolução de Redes de Computadores I, UFOP e Brasil" width="860">
+
 - **Mais acertos e erros:** disciplinas ou temas com mais acertos e mais erros em cada edição, com a
   escolha de quantos mostrar (3, 5 ou 10) e o botão para ver as questões de cada linha.
 
-<img src="docs/screenshots/04-edicoes.png" alt="Disciplinas e assuntos do Enade 2023 de Engenharia de Computação" width="860">
+  <img src="docs/screenshots/09-rankings.png" alt="Disciplinas com mais acertos e mais erros no Enade 2023" width="860">
 
 ### Dados Edições Anteriores — aba Resultados dos cursos
 Conceito Enade de cada edição (com o aviso do INEP de que as notas não são comparáveis entre
