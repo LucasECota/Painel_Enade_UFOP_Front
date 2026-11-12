@@ -5,6 +5,8 @@ import VerQuestao from "../components/QuestaoModal";
 import TabelaQuestoes from "../components/TabelaQuestoes";
 import DesempenhoPorArea from "../components/DesempenhoPorArea";
 import { carregarDesempenho } from "../desempenhoCache";
+import BotaoPdf from "../components/BotaoPdf";
+import { baixarPdf } from "../pdf";
 
 // true quando a tela é de celular (mesmo limite do CSS: 760px)
 function useEhCelular() {
@@ -233,6 +235,11 @@ function Edicoes() {
     </>
   );
 
+  // PDF com os dados da página aberta (todas as edições do curso): só se o curso tem esses dados
+  const tituloDaVisao = SUBTOPICOS.find((t) => t.chave === visao)?.titulo;
+  const temDadosParaPdf =
+    curso && (visao === "assuntos" ? edicoesComAssuntos : (curso.anosComQuestoes ?? [])).length > 0;
+
   const detalhes = curso && (
     <>
       <div className="subtopicos" role="group" aria-label="O que ver neste curso">
@@ -247,6 +254,15 @@ function Edicoes() {
           </button>
         ))}
       </div>
+
+      {temDadosParaPdf && (
+        <BotaoPdf
+          key={`pdf-${curso.chave}-${visao}`}
+          rotulo="Baixar PDF desta página"
+          dica={`PDF de ${curso.nome} com os dados de "${tituloDaVisao}", de todas as edições`}
+          aoGerar={() => baixarPdf(visao, curso)}
+        />
+      )}
 
       {visao === "assuntos" && visaoAssuntos}
       {visao === "questoes" && (

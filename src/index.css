@@ -2171,3 +2171,55 @@ tbody tr:nth-child(even) {
   padding: 1px 8px;
   font-size: 0.75rem;
 }
+
+/* "Gabarito" com menu para mostrar ou esconder questões desconsideradas e anuladas */
+.tabela-questoes th .filtro-gabarito {
+  position: relative;
+  display: inline-block;
+}
+
+.filtro-gabarito-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 11rem;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--cinza-escuro);
+  background: #fff;
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
+.filtro-gabarito-menu label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* botão "Baixar PDF desta página" (Dados Edições Anteriores) */
+.acoes-pdf {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin: 0 0 16px;
+}
+
+.acoes-pdf .btn {
+  margin: 0;
+}
+
+.acoes-pdf .btn:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}

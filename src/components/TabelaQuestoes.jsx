@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { API_URL } from "../api";
 import Topico from "./Topico";
 import ListaDeRelatorios from "./ListaDeRelatorios";
@@ -356,7 +356,67 @@ function TabelaDasDiscursivas({ componentes, completa }) {
   );
 }
 
+// Cabeçalho "Gabarito" com um menuzinho: marcar ou desmarcar para mostrar as questões desconsideradas
+// e as anuladas na tabela. As duas começam marcadas (todas as questões aparecem).
+function FiltroDoGabarito({ filtro, aoMudar }) {
+  const [aberto, setAberto] = useState(false);
+  const caixa = useRef(null);
+  const escondendo = !filtro.desconsideradas || !filtro.anuladas;
+
+  // fecha o menu ao clicar fora dele ou apertar Esc
+  useEffect(() => {
+    if (!aberto) return;
+    const fora = (e) => {
+      if (caixa.current && !caixa.current.contains(e.target)) setAberto(false);
+    };
+    const esc = (e) => e.key === "Escape" && setAberto(false);
+    document.addEventListener("mousedown", fora);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", fora);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [aberto]);
+
+  return (
+    <div className="filtro-gabarito" ref={caixa}>
+      <button
+        type="button"
+        className={escondendo ? "ordenar ativa" : "ordenar"}
+        aria-expanded={aberto}
+        aria-haspopup="true"
+        title="Mostrar ou esconder as questões desconsideradas e anuladas"
+        onClick={() => setAberto((v) => !v)}
+      >
+        Gabarito <span aria-hidden="true">{escondendo ? "●" : "▾"}</span>
+      </button>
+      {aberto && (
+        <div className="filtro-gabarito-menu" role="group" aria-label="Questões a mostrar">
+          <label>
+            <input
+              type="checkbox"
+              checked={filtro.desconsideradas}
+              onChange={(e) => aoMudar({ ...filtro, desconsideradas: e.target.checked })}
+            />
+            Desconsideradas
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={filtro.anuladas}
+              onChange={(e) => aoMudar({ ...filtro, anuladas: e.target.checked })}
+            />
+            Anuladas
+          </label>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function TabelaDoComponente({ componente, completa }) {
+  // por padrão todas as questões aparecem; o menu do Gabarito esconde as desconsideradas e as anuladas
+  const [filtro, setFiltro] = useState({ desconsideradas: true, anuladas: true });
   const [ordem, aoOrdenar] = useOrdem();
   const [comparar, aoComparar] = useState("brasil"); // com quem a UFOP é comparada nesta tabela
   // tabela resumida: a UFOP e o grupo escolhido; completa: todos os grupos
@@ -421,7 +481,7 @@ function TabelaDoComponente({ componente, completa }) {
                 rowSpan={2}
                 title="Alternativa correta. Anulada: a comissão anulou a questão. Desconsiderada: o INEP deixou a questão fora do cálculo da nota."
               >
-                Gabarito
+                <FiltroDoGabarito filtro={filtro} aoMudar={setFiltro} />
               </th>
               {completa && (
                 <th
@@ -470,51 +530,61 @@ function TabelaDoComponente({ componente, completa }) {
             </tr>
           </thead>
           <tbody>
-            {ordenar(componente.questoes, ordem).map((q) => {
-              const valida = q.situacao === "valida";
-              return (
-                <tr key={q.numero} className={valida ? undefined : "questao-fora"}>
-                  <td className="num questao-numero">
-                    <div className="numero-e-botao">
-                      <span className="numero">{q.numero}</span>
-                      <VerQuestao
-                        compacto
-                        questao={{
-                          id: String(q.numero),
-                          tipo: "objetiva",
-                          tema: q.tema,
-                          // desconsiderada: o relatório não traz o gabarito, mas a prova tem
-                          gabarito: q.gabarito ?? q.gabaritoDaProva ?? null,
-                          situacao: q.situacao,
-                          imagem: q.imagem,
-                        }}
-                      />
-                    </div>
-                  </td>
-                  <td>{q.disciplina || "—"}</td>
-                  <td>{q.tema || "—"}</td>
-                  {colunasAcerto.map((c) => (
-                    <td
-                      key={c.chave}
-                      className={
-                        c.chave === "curso" && valida ? classeDoCurso(q.acertos, comparar) : "num"
-                      }
-                    >
-                      {valida ? formatar(q.acertos[c.chave]) : "—"}
+            {ordenar(componente.questoes, ordem)
+              .filter(
+                (q) =>
+                  (filtro.desconsideradas || q.situacao !== "desconsiderada") &&
+                  (filtro.anuladas || q.situacao !== "anulada"),
+              )
+              .map((q) => {
+                const valida = q.situacao === "valida";
+                return (
+                  <tr key={q.numero} className={valida ? undefined : "questao-fora"}>
+                    <td className="num questao-numero">
+                      <div className="numero-e-botao">
+                        <span className="numero">{q.numero}</span>
+                        <VerQuestao
+                          compacto
+                          questao={{
+                            id: String(q.numero),
+                            tipo: "objetiva",
+                            tema: q.tema,
+                            // desconsiderada: o relatório não traz o gabarito, mas a prova tem
+                            gabarito: q.gabarito ?? q.gabaritoDaProva ?? null,
+                            situacao: q.situacao,
+                            imagem: q.imagem,
+                          }}
+                        />
+                      </div>
                     </td>
-                  ))}
-                  <td className="num gabarito">
-                    {valida ? q.gabarito : q.situacao === "anulada" ? "Anulada" : "Desconsiderada"}
-                  </td>
-                  {completa &&
-                    ALTERNATIVAS.map((a) => (
-                      <td key={a} className={valida && a === q.gabarito ? "num certa" : "num"}>
-                        {valida ? formatar(q.respostas[a]) : "—"}
+                    <td>{q.disciplina || "—"}</td>
+                    <td>{q.tema || "—"}</td>
+                    {colunasAcerto.map((c) => (
+                      <td
+                        key={c.chave}
+                        className={
+                          c.chave === "curso" && valida ? classeDoCurso(q.acertos, comparar) : "num"
+                        }
+                      >
+                        {valida ? formatar(q.acertos[c.chave]) : "—"}
                       </td>
                     ))}
-                </tr>
-              );
-            })}
+                    <td className="num gabarito">
+                      {valida
+                        ? q.gabarito
+                        : q.situacao === "anulada"
+                          ? "Anulada"
+                          : "Desconsiderada"}
+                    </td>
+                    {completa &&
+                      ALTERNATIVAS.map((a) => (
+                        <td key={a} className={valida && a === q.gabarito ? "num certa" : "num"}>
+                          {valida ? formatar(q.respostas[a]) : "—"}
+                        </td>
+                      ))}
+                  </tr>
+                );
+              })}
           </tbody>
         </table>
       </div>

@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import Topico from "../components/Topico";
 import ListaDeRelatorios from "../components/ListaDeRelatorios";
+import BotaoPdf from "../components/BotaoPdf";
+import { baixarPdf } from "../pdf";
 import { API_URL } from "../api";
 
 const formatar = (n) =>
@@ -101,6 +103,19 @@ function Resultados() {
               </button>
             ))}
           </div>
+
+          {curso && (
+            <BotaoPdf
+              key={chave}
+              rotulo="Baixar PDF desta página"
+              dica={`PDF de ${curso.nome} com o conceito Enade, a comparação com o Brasil e o perfil dos concluintes`}
+              aoGerar={() =>
+                baixarPdf("resultados", curso, {
+                  fonte: dados.fonte ? `Fonte: ${dados.fonte}.` : undefined,
+                })
+              }
+            />
+          )}
 
           <Topico titulo="Conceito Enade em cada edição" aberto>
             <p>

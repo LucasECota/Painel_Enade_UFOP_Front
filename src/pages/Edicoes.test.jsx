@@ -5,6 +5,10 @@ import { API_URL } from "../api";
 import { limparCacheDoDesempenho } from "../desempenhoCache";
 import { simularApi, simularTela } from "../test/api";
 import Edicoes from "./Edicoes";
+import { baixarPdf } from "../pdf";
+
+// o PDF de verdade é testado em src/pdf: aqui só se confere o botão e o que ele pede
+vi.mock("../pdf", () => ({ baixarPdf: vi.fn().mockResolvedValue("arquivo.pdf") }));
 
 const cursos = [
   {
@@ -383,6 +387,37 @@ describe("Edições", () => {
     // sem "questoes" na API (outras disciplinas) não aparece botão
     const compiladores = screen.getByText("Compiladores I").closest("details");
     expect(within(compiladores).queryByRole("button", { name: "Ver questão" })).toBeNull();
+  });
+
+  describe("botão Baixar PDF", () => {
+    it("aparece em cada página do curso e pede o PDF daquela página e daquele curso", async () => {
+      const usuario = userEvent.setup();
+      baixarPdf.mockClear();
+      await renderizar();
+      await usuario.click(cardDoCurso("Computação"));
+
+      for (const [pagina, chave] of [
+        ["Assuntos por disciplina", "assuntos"],
+        ["Acertos por questão", "questoes"],
+        ["Evolução por disciplina", "evolucao"],
+        ["Mais acertos e erros", "rankings"],
+      ]) {
+        await usuario.click(screen.getByRole("button", { name: pagina }));
+        await usuario.click(screen.getByRole("button", { name: "Baixar PDF desta página" }));
+        expect(baixarPdf).toHaveBeenLastCalledWith(chave, expect.objectContaining({ chave: "ec" }));
+      }
+    });
+
+    it("não aparece antes de escolher um curso, nem para curso sem os dados da página", async () => {
+      const usuario = userEvent.setup();
+      await renderizar();
+      expect(screen.queryByRole("button", { name: "Baixar PDF desta página" })).toBeNull();
+
+      // Sistemas de Informação não tem tabela de acertos neste teste (anosComQuestoes vazio)
+      await usuario.click(cardDoCurso("Sistemas"));
+      await usuario.click(screen.getByRole("button", { name: "Acertos por questão" }));
+      expect(screen.queryByRole("button", { name: "Baixar PDF desta página" })).toBeNull();
+    });
   });
 
   it("usa 'questão' no singular e 'questões' no plural, sem mostrar a contagem de assuntos", async () => {

@@ -97,6 +97,76 @@ describe("TabelaQuestoes", () => {
     expect(within(linha(17)).queryByRole("button", { name: "Ver questão" })).toBeNull();
   });
 
+  describe("filtro do gabarito (desconsideradas e anuladas)", () => {
+    async function abrirTabela() {
+      const usuario = userEvent.setup();
+      simularApi({ "/enade/ec/questoes": tabela() });
+      render(<TabelaQuestoes chave="ec" anos={[2023]} />);
+      await usuario.click(screen.getByRole("button", { name: "2023" }));
+      await screen.findByText("Tema da questão 10");
+      return usuario;
+    }
+    const numeros = () =>
+      [...document.querySelectorAll("table")[1].querySelectorAll("td.questao-numero .numero")].map(
+        (td) => Number(td.textContent),
+      );
+    // o botão "Gabarito" da tabela do Componente Específico (a segunda)
+    const botaoGabarito = () => screen.getAllByRole("button", { name: /^Gabarito/ })[1];
+
+    it("começa mostrando todas as questões, com as duas opções marcadas", async () => {
+      const usuario = await abrirTabela();
+      expect(numeros()).toEqual([10, 11, 17, 25]);
+
+      await usuario.click(botaoGabarito());
+      expect(screen.getByRole("checkbox", { name: "Desconsideradas" })).toBeChecked();
+      expect(screen.getByRole("checkbox", { name: "Anuladas" })).toBeChecked();
+    });
+
+    it("desmarcar Desconsideradas esconde só essas; desmarcar Anuladas esconde só essas", async () => {
+      const usuario = await abrirTabela();
+      await usuario.click(botaoGabarito());
+
+      await usuario.click(screen.getByRole("checkbox", { name: "Desconsideradas" }));
+      expect(numeros()).toEqual([10, 11, 25]); // a 17 (desconsiderada) sumiu
+
+      await usuario.click(screen.getByRole("checkbox", { name: "Anuladas" }));
+      expect(numeros()).toEqual([10, 11]); // a 25 (anulada) também
+
+      await usuario.click(screen.getByRole("checkbox", { name: "Desconsideradas" }));
+      expect(numeros()).toEqual([10, 11, 17]); // marcar de novo mostra de volta
+    });
+
+    it("o filtro é só da tabela em que foi feito e funciona junto com a ordenação", async () => {
+      const usuario = await abrirTabela();
+      await usuario.click(botaoGabarito());
+      await usuario.click(screen.getByRole("checkbox", { name: "Desconsideradas" }));
+      await usuario.click(screen.getByRole("checkbox", { name: "Anuladas" }));
+
+      // a Formação Geral (primeira tabela) continua com a questão 1
+      expect(
+        document.querySelectorAll("table")[0].querySelectorAll("td.questao-numero"),
+      ).toHaveLength(1);
+      // ordenar por Questão (decrescente) mantém o filtro
+      await usuario.click(screen.getAllByRole("button", { name: /^Questão/ })[1]);
+      expect(numeros()).toEqual([11, 10]);
+    });
+
+    it("o menu fecha com Esc e ao clicar fora, e o botão avisa quando há filtro ativo", async () => {
+      const usuario = await abrirTabela();
+      await usuario.click(botaoGabarito());
+      expect(screen.getByRole("group", { name: "Questões a mostrar" })).toBeInTheDocument();
+
+      await usuario.keyboard("{Escape}");
+      expect(screen.queryByRole("group", { name: "Questões a mostrar" })).toBeNull();
+
+      await usuario.click(botaoGabarito());
+      await usuario.click(screen.getByRole("checkbox", { name: "Anuladas" }));
+      await usuario.click(document.body); // clique fora
+      expect(screen.queryByRole("group", { name: "Questões a mostrar" })).toBeNull();
+      expect(botaoGabarito()).toHaveClass("ativa"); // há filtro ativo
+    });
+  });
+
   describe("esconder e mostrar as tabelas", () => {
     it("as tabelas já abrem visíveis, e a setinha do título esconde e mostra cada uma", async () => {
       const usuario = userEvent.setup();

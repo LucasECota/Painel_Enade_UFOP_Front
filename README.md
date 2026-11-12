@@ -86,6 +86,14 @@ abrem abertos e podem ser escondidos.
 
 <img src="docs/screenshots/06-resultados-comparacao-perfil.png" alt="Comparação com a média do Brasil e perfil dos concluintes" width="860">
 
+### PDF de cada página (Dados Edições Anteriores)
+Em cada página de **Dados Edições Anteriores** (os quatro subtópicos de Análise das provas e a aba
+Resultados dos cursos) há o botão **Baixar PDF desta página**. Ele gera, no próprio navegador, um PDF
+do **curso escolhido** com os dados daquela página de todas as edições: tabelas e gráficos de barras,
+sem as imagens das questões. Os PDFs têm cabeçalho e rodapé com fonte e numeração, margens de 15 mm
+e as tabelas continuam na página seguinte com o cabeçalho repetido. As bibliotecas (jsPDF e
+jspdf-autotable) só são baixadas quando o leitor clica no botão. O código está em `src/pdf/`.
+
 ### No celular
 Todas as telas foram pensadas para telas pequenas, com menu recolhido e gráficos adaptados.
 
@@ -126,6 +134,7 @@ Todas as telas foram pensadas para telas pequenas, com menu recolhido e gráfico
 | Área | Ferramentas |
 | --- | --- |
 | Interface | React 19, React Router 7, CSS próprio (sem framework de UI) |
+| PDF | jsPDF e jspdf-autotable (carregados só ao gerar o PDF) |
 | Build | Vite 8 |
 | Testes | Vitest 5, Testing Library, jsdom |
 | Qualidade | Oxlint, Oxfmt, GitHub Actions, Dependabot |
@@ -214,12 +223,14 @@ src/
 ├── components/
 │   ├── DesempenhoPorArea.jsx  evolução por disciplina e rankings de acertos e erros
 │   ├── GraficoEvolucao.jsx    gráfico de barras da evolução (SVG)
+│   ├── BotaoPdf.jsx       botão "Baixar PDF desta página"
 │   ├── Layout.jsx         cabeçalho, menu e rodapé
 │   ├── ListaDeRelatorios.jsx  lista de relatórios do INEP para baixar
 │   ├── PaginaComAbas.jsx  página com abas (a aba vai para o endereço, ?aba=)
 │   ├── QuestaoModal.jsx   botão e janela "Ver questão" (imagem e gabarito)
 │   ├── TabelaQuestoes.jsx tabelas de acertos por questão e de discursivas
 │   └── Topico.jsx         seção que abre e fecha
+├── pdf/                   geração dos PDFs (base.js: página, tabelas e gráficos; paginas.js: um PDF por página)
 ├── gruposDeDisciplinas.js subgrupos de disciplinas do menu da evolução
 ├── desempenhoCache.js     guarda os dados do desempenho entre as abas
 ├── data/avaliaufop.js     cursos, módulos e links do Moodle

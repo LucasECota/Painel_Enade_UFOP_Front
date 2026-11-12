@@ -1,10 +1,16 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { vi } from "vitest";
 import { API_URL } from "../api";
 import { simularApi } from "../test/api";
 import Resultados from "./Resultados";
+import { baixarPdf } from "../pdf";
+
+// o PDF de verdade é testado em src/pdf: aqui só se confere o botão e o que ele pede
+vi.mock("../pdf", () => ({ baixarPdf: vi.fn().mockResolvedValue("arquivo.pdf") }));
 
 const resultados = {
+  fonte: "INEP — Relatórios de IES do Enade (teste)",
   cursos: [
     {
       chave: "ec",
@@ -105,6 +111,28 @@ describe("Resultados", () => {
 
     await usuario.click(screen.getByText("Relatórios do INEP para baixar"));
     expect(topico("Relatórios do INEP para baixar")).toHaveAttribute("open");
+  });
+
+  it("tem o botão Baixar PDF, que pede o PDF dos resultados do curso que está na tela", async () => {
+    const usuario = userEvent.setup();
+    baixarPdf.mockClear();
+    await renderizar();
+
+    await usuario.click(screen.getByRole("button", { name: "Baixar PDF desta página" }));
+    expect(baixarPdf).toHaveBeenLastCalledWith(
+      "resultados",
+      expect.objectContaining({ chave: "ec", nome: "Engenharia de Computação" }),
+      expect.objectContaining({ fonte: expect.stringContaining("INEP") }),
+    );
+
+    // outro curso: o PDF é do outro curso
+    await usuario.click(screen.getByRole("button", { name: "Sistemas de Informação" }));
+    await usuario.click(screen.getByRole("button", { name: "Baixar PDF desta página" }));
+    expect(baixarPdf).toHaveBeenLastCalledWith(
+      "resultados",
+      expect.objectContaining({ chave: "si" }),
+      expect.anything(),
+    );
   });
 
   describe("conceito Enade", () => {
