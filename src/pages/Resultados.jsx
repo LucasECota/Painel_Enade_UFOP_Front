@@ -161,9 +161,7 @@ function Resultados() {
             <p>
               Relatórios oficiais de cada edição do Enade (UFOP, campus João Monlevade). IES
               significa Instituição de Educação Superior: o relatório da IES reúne os resultados de
-              todos os cursos avaliados da UFOP em João Monlevade. Os relatórios de cada curso, com
-              o percentual de acerto de cada questão, ficam em "Análise das provas", em Acertos por
-              questão.
+              todos os cursos avaliados da UFOP em João Monlevade.
             </p>
 
             <h3>Relatórios da IES (todos os cursos)</h3>

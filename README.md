@@ -15,7 +15,7 @@ Projeto desenvolvido no âmbito do programa **Pró-Ativa (UFOP)**, por **Lucas E
 com orientação do prof. **Josemar Alves Caetano**.
 
 > **Repositório da API:** [Painel_Enade_UFOP_Back](https://github.com/LucasECota/Painel_Enade_UFOP_Back)
-> (Node.js + Express). O guia para publicar os dois em um servidor está em
+> (Node.js + Express). O guia para publicar os dois com Docker está em
 > [DEPLOY.md](https://github.com/LucasECota/Painel_Enade_UFOP_Back/blob/main/DEPLOY.md).
 
 ## O problema
@@ -176,10 +176,11 @@ o endereço do site em `CORS_ORIGINS` quando forem domínios diferentes.
 
 ## Publicação
 
-O guia de publicação (site e API juntos, em um servidor Linux com Nginx) está no repositório da API:
-[DEPLOY.md](https://github.com/LucasECota/Painel_Enade_UFOP_Back/blob/main/DEPLOY.md). O
-redirecionamento das rotas já está em `public/_redirects` (hospedagens estáticas); com Nginx, use o
-`try_files` do exemplo do guia.
+O site é publicado **somente com Docker**. Este repositório tem o `Dockerfile` do site (gera o build
+do React e o serve com Nginx) e o `docker/nginx.conf` (repassa `/api/` para a API e devolve o
+`index.html` nas rotas do site, para o F5 funcionar). O `docker-compose.yml`, que sobe site e API
+juntos, e o guia completo para a TI ficam no repositório da API:
+[DEPLOY.md](https://github.com/LucasECota/Painel_Enade_UFOP_Back/blob/main/DEPLOY.md).
 
 ## Testes
 

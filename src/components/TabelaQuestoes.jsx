@@ -620,7 +620,7 @@ function TabelaQuestoes({ chave, anos }) {
             nos outros grupos. <strong>Desconsiderada:</strong> o INEP deixou a questão fora do
             cálculo da nota (critério estatístico). <strong>Anulada:</strong> anulada pela comissão.
             <strong> Nota média (discursivas):</strong> média das notas, de 0 a 100, dos concluintes
-            na questão discursiva. Cada tabela tem a sua ordenação e o seu grupo de comparação.
+            na questão discursiva.
             {completa && (
               <>
                 {" "}
