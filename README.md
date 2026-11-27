@@ -41,7 +41,7 @@ atividades e o botão que leva direto à inscrição no Moodle da UFOP.
 ### Preparatório Enade 2026 — aba Desempenho dos alunos
 Inscritos, concluintes e aproveitamento médio dos alunos em cada atividade do AvaliaUFOP, com uma
 linha tracejada marcando os 60% exigidos para o certificado. Os dados vêm de exports do Moodle,
-**anonimizados** antes de chegarem ao repositório.
+**anonimizados** antes de chegarem ao repositório. Abaixo das atividades, o **Simulado Enade** aparece à parte, com quantos alunos o fizeram, a média das notas e uma tabela que compara o acerto em cada questão com o da UFOP e o do Brasil no Enade de onde ela veio (com o botão para ver a questão e ordenação por todas as colunas).
 
 <img src="docs/screenshots/03-desempenho.png" alt="Painel de desempenho dos alunos no AvaliaUFOP" width="860">
 

@@ -3,6 +3,8 @@ import { API_URL } from "../api";
 import Topico from "./Topico";
 import ListaDeRelatorios from "./ListaDeRelatorios";
 import VerQuestao from "./QuestaoModal";
+import BotaoOrdenar from "./BotaoOrdenar";
+import useOrdem from "../useOrdem";
 
 const formatar = (v) =>
   v === null || v === undefined
@@ -93,35 +95,6 @@ function ordenar(questoes, { coluna, sentido }) {
     if (yv === null) return -1;
     return (xv - yv) * fator || x.numero - y.numero;
   });
-}
-
-// Cabeçalho que ordena ao clicar (crescente, e de novo para decrescente)
-function BotaoOrdenar({ coluna, rotulo, dica, ordem, aoOrdenar }) {
-  const ativa = ordem.coluna === coluna;
-  const indicador = !ativa ? "⇅" : ordem.sentido === "asc" ? "▲" : "▼";
-  return (
-    <button
-      type="button"
-      className={ativa ? "ordenar ativa" : "ordenar"}
-      title={dica}
-      onClick={() => aoOrdenar(coluna)}
-    >
-      {rotulo} <span aria-hidden="true">{indicador}</span>
-    </button>
-  );
-}
-
-// Estado de ordenação de uma tabela: clicar na coluna ordena de forma crescente; clicar de novo inverte.
-// Cada tabela tem o seu, então ordenar uma não muda as outras.
-function useOrdem() {
-  const [ordem, setOrdem] = useState({ coluna: "numero", sentido: "asc" });
-  const ordenarPor = (coluna) =>
-    setOrdem((atual) =>
-      atual.coluna === coluna
-        ? { coluna, sentido: atual.sentido === "asc" ? "desc" : "asc" }
-        : { coluna, sentido: "asc" },
-    );
-  return [ordem, ordenarPor];
 }
 
 // Na tabela completa todos os grupos aparecem como colunas; aqui se escolhe com qual deles o número
